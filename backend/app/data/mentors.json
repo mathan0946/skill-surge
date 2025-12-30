@@ -1,0 +1,77 @@
+[
+    {
+        "id": "1",
+        "name": "Sarah Chen",
+        "title": "Senior Software Engineer",
+        "company": "Google",
+        "experience": "8 years",
+        "expertise": [
+            "Frontend",
+            "System Design",
+            "Career Growth"
+        ],
+        "availability": "2 hrs/week",
+        "rating": 4.9,
+        "bio": "Former interviewer at Google. Love helping engineers level up."
+    },
+    {
+        "id": "2",
+        "name": "Michael Rodriguez",
+        "title": "Staff Engineer",
+        "company": "Meta",
+        "experience": "10 years",
+        "expertise": [
+            "Full Stack",
+            "React",
+            "Distributed Systems"
+        ],
+        "availability": "3 hrs/week",
+        "rating": 4.8,
+        "bio": "Built products used by billions. Passionate about mentoring."
+    },
+    {
+        "id": "3",
+        "name": "Priya Patel",
+        "title": "Engineering Manager",
+        "company": "Amazon",
+        "experience": "12 years",
+        "expertise": [
+            "Leadership",
+            "System Design",
+            "Career Transitions"
+        ],
+        "availability": "2 hrs/week",
+        "rating": 4.9,
+        "bio": "Transitioned from IC to management. Happy to guide your path."
+    },
+    {
+        "id": "4",
+        "name": "David Kim",
+        "title": "Principal Engineer",
+        "company": "Netflix",
+        "experience": "15 years",
+        "expertise": [
+            "Backend",
+            "Microservices",
+            "Scale"
+        ],
+        "availability": "1 hr/week",
+        "rating": 5.0,
+        "bio": "Built systems serving millions. Expert in high-scale architecture."
+    },
+    {
+        "id": "5",
+        "name": "Emily Johnson",
+        "title": "Tech Lead",
+        "company": "Stripe",
+        "experience": "7 years",
+        "expertise": [
+            "Payments",
+            "API Design",
+            "Startup to Scale"
+        ],
+        "availability": "3 hrs/week",
+        "rating": 4.7,
+        "bio": "Joined as employee #50. Can help navigate high-growth environments."
+    }
+]

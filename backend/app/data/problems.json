@@ -1,0 +1,183 @@
+[
+    {
+        "id": "1",
+        "title": "Two Sum",
+        "difficulty": "Easy",
+        "category": "Arrays & Hashing",
+        "companies": [
+            "Google",
+            "Amazon",
+            "Facebook",
+            "Microsoft"
+        ],
+        "frequency": 95,
+        "topics": [
+            "Arrays",
+            "Hash Maps"
+        ],
+        "link": "https://leetcode.com/problems/two-sum",
+        "estimatedTime": "30 min"
+    },
+    {
+        "id": "2",
+        "title": "Valid Anagram",
+        "difficulty": "Easy",
+        "category": "Arrays & Hashing",
+        "companies": [
+            "Amazon",
+            "Microsoft"
+        ],
+        "frequency": 85,
+        "topics": [
+            "Strings",
+            "Hash Maps"
+        ],
+        "link": "https://leetcode.com/problems/valid-anagram",
+        "estimatedTime": "25 min"
+    },
+    {
+        "id": "3",
+        "title": "Contains Duplicate",
+        "difficulty": "Easy",
+        "category": "Arrays & Hashing",
+        "companies": [
+            "Google",
+            "Apple"
+        ],
+        "frequency": 80,
+        "topics": [
+            "Arrays",
+            "Sets"
+        ],
+        "link": "https://leetcode.com/problems/contains-duplicate",
+        "estimatedTime": "20 min"
+    },
+    {
+        "id": "4",
+        "title": "Valid Palindrome",
+        "difficulty": "Easy",
+        "category": "Two Pointers",
+        "companies": [
+            "Facebook",
+            "Microsoft"
+        ],
+        "frequency": 75,
+        "topics": [
+            "Strings",
+            "Two Pointers"
+        ],
+        "link": "https://leetcode.com/problems/valid-palindrome",
+        "estimatedTime": "25 min"
+    },
+    {
+        "id": "5",
+        "title": "Container With Most Water",
+        "difficulty": "Medium",
+        "category": "Two Pointers",
+        "companies": [
+            "Amazon",
+            "Google",
+            "Bloomberg"
+        ],
+        "frequency": 70,
+        "topics": [
+            "Arrays",
+            "Two Pointers"
+        ],
+        "link": "https://leetcode.com/problems/container-with-most-water",
+        "estimatedTime": "35 min"
+    },
+    {
+        "id": "6",
+        "title": "3Sum",
+        "difficulty": "Medium",
+        "category": "Two Pointers",
+        "companies": [
+            "Facebook",
+            "Amazon",
+            "Microsoft"
+        ],
+        "frequency": 85,
+        "topics": [
+            "Arrays",
+            "Two Pointers",
+            "Sorting"
+        ],
+        "link": "https://leetcode.com/problems/3sum",
+        "estimatedTime": "45 min"
+    },
+    {
+        "id": "7",
+        "title": "Invert Binary Tree",
+        "difficulty": "Easy",
+        "category": "Trees",
+        "companies": [
+            "Google",
+            "Apple"
+        ],
+        "frequency": 90,
+        "topics": [
+            "Trees",
+            "Recursion",
+            "BFS/DFS"
+        ],
+        "link": "https://leetcode.com/problems/invert-binary-tree",
+        "estimatedTime": "20 min"
+    },
+    {
+        "id": "8",
+        "title": "Maximum Depth of Binary Tree",
+        "difficulty": "Easy",
+        "category": "Trees",
+        "companies": [
+            "Amazon",
+            "Microsoft"
+        ],
+        "frequency": 85,
+        "topics": [
+            "Trees",
+            "Recursion",
+            "DFS"
+        ],
+        "link": "https://leetcode.com/problems/maximum-depth-of-binary-tree",
+        "estimatedTime": "25 min"
+    },
+    {
+        "id": "9",
+        "title": "Merge Two Sorted Lists",
+        "difficulty": "Easy",
+        "category": "Linked Lists",
+        "companies": [
+            "Amazon",
+            "Microsoft",
+            "Apple"
+        ],
+        "frequency": 80,
+        "topics": [
+            "Linked Lists",
+            "Recursion"
+        ],
+        "link": "https://leetcode.com/problems/merge-two-sorted-lists",
+        "estimatedTime": "30 min"
+    },
+    {
+        "id": "10",
+        "title": "LRU Cache",
+        "difficulty": "Medium",
+        "category": "Design",
+        "companies": [
+            "Amazon",
+            "Facebook",
+            "Microsoft",
+            "Google"
+        ],
+        "frequency": 95,
+        "topics": [
+            "Design",
+            "Hash Maps",
+            "Linked Lists"
+        ],
+        "link": "https://leetcode.com/problems/lru-cache",
+        "estimatedTime": "45 min"
+    }
+]

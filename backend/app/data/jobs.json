@@ -1,0 +1,97 @@
+[
+    {
+        "id": "1",
+        "title": "Senior Frontend Engineer",
+        "company": "Google",
+        "location": "Mountain View, CA",
+        "salary": "$150K - $200K",
+        "type": "Full-time",
+        "experience": "5+ years",
+        "skills": [
+            "JavaScript",
+            "React",
+            "TypeScript",
+            "System Design",
+            "Testing"
+        ],
+        "description": "Join our team to build world-class web applications.",
+        "posted": "2024-12-28",
+        "demand": "High"
+    },
+    {
+        "id": "2",
+        "title": "Full Stack Developer",
+        "company": "Meta",
+        "location": "Menlo Park, CA",
+        "salary": "$140K - $180K",
+        "type": "Full-time",
+        "experience": "3+ years",
+        "skills": [
+            "JavaScript",
+            "React",
+            "Node.js",
+            "GraphQL",
+            "AWS"
+        ],
+        "description": "Build products used by billions of people.",
+        "posted": "2024-12-27",
+        "demand": "High"
+    },
+    {
+        "id": "3",
+        "title": "Software Engineer II",
+        "company": "Amazon",
+        "location": "Seattle, WA",
+        "salary": "$130K - $170K",
+        "type": "Full-time",
+        "experience": "2+ years",
+        "skills": [
+            "Python",
+            "Java",
+            "AWS",
+            "System Design",
+            "SQL"
+        ],
+        "description": "Work on challenging distributed systems problems.",
+        "posted": "2024-12-26",
+        "demand": "Medium"
+    },
+    {
+        "id": "4",
+        "title": "React Developer",
+        "company": "Startup Co",
+        "location": "Remote",
+        "salary": "$100K - $140K",
+        "type": "Full-time",
+        "experience": "2+ years",
+        "skills": [
+            "JavaScript",
+            "React",
+            "CSS",
+            "TypeScript",
+            "Redux"
+        ],
+        "description": "Join our fast-growing startup.",
+        "posted": "2024-12-25",
+        "demand": "Medium"
+    },
+    {
+        "id": "5",
+        "title": "Backend Engineer",
+        "company": "Netflix",
+        "location": "Los Gatos, CA",
+        "salary": "$160K - $220K",
+        "type": "Full-time",
+        "experience": "4+ years",
+        "skills": [
+            "Java",
+            "Python",
+            "Microservices",
+            "Kafka",
+            "AWS"
+        ],
+        "description": "Scale systems that serve millions of users.",
+        "posted": "2024-12-24",
+        "demand": "High"
+    }
+]

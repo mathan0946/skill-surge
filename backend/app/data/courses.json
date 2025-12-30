@@ -1,0 +1,81 @@
+[
+    {
+        "id": "1",
+        "title": "Data Structures & Algorithms",
+        "provider": "NeetCode",
+        "duration": "40 hours",
+        "difficulty": "Beginner to Advanced",
+        "topics": [
+            "Arrays",
+            "Trees",
+            "Graphs",
+            "Dynamic Programming"
+        ],
+        "rating": 4.9,
+        "link": "https://neetcode.io",
+        "type": "Video Course"
+    },
+    {
+        "id": "2",
+        "title": "System Design Interview",
+        "provider": "Educative",
+        "duration": "25 hours",
+        "difficulty": "Intermediate",
+        "topics": [
+            "Scalability",
+            "Databases",
+            "Caching",
+            "Load Balancing"
+        ],
+        "rating": 4.8,
+        "link": "https://educative.io/system-design",
+        "type": "Interactive Course"
+    },
+    {
+        "id": "3",
+        "title": "JavaScript: The Hard Parts",
+        "provider": "Frontend Masters",
+        "duration": "10 hours",
+        "difficulty": "Intermediate",
+        "topics": [
+            "Closures",
+            "Async/Await",
+            "OOP",
+            "Functional Programming"
+        ],
+        "rating": 4.7,
+        "link": "https://frontendmasters.com",
+        "type": "Video Course"
+    },
+    {
+        "id": "4",
+        "title": "React - The Complete Guide",
+        "provider": "Udemy",
+        "duration": "48 hours",
+        "difficulty": "Beginner to Advanced",
+        "topics": [
+            "React Hooks",
+            "Redux",
+            "Next.js",
+            "Testing"
+        ],
+        "rating": 4.6,
+        "link": "https://udemy.com",
+        "type": "Video Course"
+    },
+    {
+        "id": "5",
+        "title": "Behavioral Interview Prep",
+        "provider": "Exponent",
+        "duration": "8 hours",
+        "difficulty": "All Levels",
+        "topics": [
+            "STAR Method",
+            "Leadership",
+            "Conflict Resolution"
+        ],
+        "rating": 4.8,
+        "link": "https://tryexponent.com",
+        "type": "Video + Practice"
+    }
+]
