@@ -25,10 +25,20 @@ CREATE TABLE IF NOT EXISTS roadmaps (
     predicted_ready_date TEXT DEFAULT '10 weeks',
     total_tasks INTEGER DEFAULT 0,
     estimated_hours_per_week INTEGER DEFAULT 10,
+    task_completion_times JSONB DEFAULT '{}'::jsonb,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(user_id, target_role)
 );
+
+-- Migration: Add task_completion_times column if it doesn't exist
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'roadmaps' AND column_name = 'task_completion_times') THEN
+        ALTER TABLE roadmaps ADD COLUMN task_completion_times JSONB DEFAULT '{}'::jsonb;
+    END IF;
+END $$;
 
 -- Interview sessions table: Stores mock interview sessions
 CREATE TABLE IF NOT EXISTS interview_sessions (

@@ -10,9 +10,6 @@ from app.services.supabase_service import create_profile, get_profile as get_pro
 
 router = APIRouter()
 
-# In-memory storage for demo (fallback if Supabase not configured)
-profiles_db = {}
-
 
 class ResumeTextRequest(BaseModel):
     resume_text: str
@@ -71,10 +68,7 @@ async def upload_resume(file: UploadFile = File(...)):
             "skillGaps": skill_data.get("skillGaps", []),
         }
         
-        # Store in memory
-        profiles_db[user_id] = profile
-        
-        # Also store in Supabase
+        # Store in Supabase (required)
         await create_profile(user_id, profile)
         
         return {"success": True, "profile": profile, "data": skill_data}
@@ -115,10 +109,7 @@ async def analyze_resume_text(request: ResumeTextRequest):
             "skillGaps": skill_data.get("skillGaps", []),
         }
         
-        # Store in memory
-        profiles_db[user_id] = profile
-        
-        # Also store in Supabase
+        # Store in Supabase (required)
         await create_profile(user_id, profile)
         
         return {"success": True, "profile": profile, "data": skill_data}
@@ -131,57 +122,52 @@ async def analyze_resume_text(request: ResumeTextRequest):
 @router.get("/{user_id}")
 async def get_profile(user_id: str):
     """
-    Get a user's profile from memory, Supabase, or return demo.
+    Get a user's profile from Supabase.
     """
-    # Check in-memory first
-    if user_id in profiles_db:
-        return profiles_db[user_id]
-    
-    # Try to fetch from Supabase
     try:
-        db_profile = await get_profile_from_db(user_id)
-        if db_profile:
-            profiles_db[user_id] = db_profile
-            return db_profile
+        profile = await get_profile_from_db(user_id)
+        
+        if not profile:
+            raise HTTPException(
+                status_code=404,
+                detail="Profile not found. Please upload your resume first."
+            )
+        
+        return profile
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Supabase fetch error: {e}")
-    
-    # Return demo profile as fallback
-    demo_profile = {
-        "id": "demo-profile-1",
-        "userId": user_id,
-        "skills": ["JavaScript", "React", "Python", "Node.js", "SQL", "Git"],
-        "experience": ["Software Engineer at Tech Corp", "Intern at StartupXYZ"],
-        "education": ["B.S. Computer Science"],
-        "skillGraph": [
-            {"id": "1", "name": "JavaScript", "level": 85, "category": "Frontend", "connections": ["2", "3"]},
-            {"id": "2", "name": "React", "level": 80, "category": "Frontend", "connections": ["1", "4"]},
-            {"id": "3", "name": "TypeScript", "level": 70, "category": "Frontend", "connections": ["1", "2"]},
-            {"id": "4", "name": "Node.js", "level": 75, "category": "Backend", "connections": ["2", "5"]},
-            {"id": "5", "name": "Python", "level": 65, "category": "Backend", "connections": ["4", "6"]},
-            {"id": "6", "name": "SQL", "level": 70, "category": "Database", "connections": ["5"]},
-        ],
-        "summary": "Experienced software engineer with full-stack development skills.",
-        "strongestSkills": ["JavaScript", "React"],
-        "skillGaps": ["System Design", "Cloud Architecture"],
-    }
-    profiles_db[user_id] = demo_profile
-    return demo_profile
+        print(f"Error fetching profile: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching profile: {str(e)}")
 
 
 @router.get("/{user_id}/skills")
 async def get_skill_graph(user_id: str):
     """
-    Get a user's skill graph.
+    Get a user's skill graph from Supabase.
     """
-    profile = await get_profile(user_id)
-    return {
-        "userId": user_id,
-        "skills": profile.get("skillGraph", []),
-        "summary": {
-            "totalSkills": len(profile.get("skillGraph", [])),
-            "avgLevel": sum(s.get("level", 0) for s in profile.get("skillGraph", [])) // max(len(profile.get("skillGraph", [])), 1),
-            "strongSkills": len([s for s in profile.get("skillGraph", []) if s.get("level", 0) >= 70]),
-            "weakSkills": len([s for s in profile.get("skillGraph", []) if s.get("level", 0) < 50]),
+    try:
+        profile = await get_profile_from_db(user_id)
+        
+        if not profile:
+            raise HTTPException(
+                status_code=404,
+                detail="Profile not found. Please upload your resume first."
+            )
+        
+        return {
+            "userId": user_id,
+            "skills": profile.get("skillGraph", []),
+            "summary": {
+                "totalSkills": len(profile.get("skillGraph", [])),
+                "avgLevel": sum(s.get("level", 0) for s in profile.get("skillGraph", [])) // max(len(profile.get("skillGraph", [])), 1),
+                "strongSkills": len([s for s in profile.get("skillGraph", []) if s.get("level", 0) >= 70]),
+                "weakSkills": len([s for s in profile.get("skillGraph", []) if s.get("level", 0) < 50]),
+            }
         }
-    }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error fetching skill graph: {e}")
+        raise HTTPException(status_code=500, detail=f"Error fetching skill graph: {str(e)}")

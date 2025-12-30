@@ -1,0 +1,51 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6"/>
+      <stop offset="50%" style="stop-color:#8B5CF6"/>
+      <stop offset="100%" style="stop-color:#EC4899"/>
+    </linearGradient>
+    <linearGradient id="gradient2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#06B6D4"/>
+      <stop offset="100%" style="stop-color:#3B82F6"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#0F172A"/>
+  <circle cx="256" cy="256" r="240" fill="url(#gradient1)" opacity="0.1"/>
+  
+  <!-- Outer ring -->
+  <circle cx="256" cy="256" r="220" stroke="url(#gradient1)" stroke-width="4" fill="none" opacity="0.5"/>
+  
+  <!-- Rising arrow/surge symbol -->
+  <g filter="url(#glow)">
+    <!-- Base platform -->
+    <rect x="120" y="340" width="272" height="24" rx="12" fill="url(#gradient2)" opacity="0.8"/>
+    
+    <!-- Rising bars representing skill growth -->
+    <rect x="150" y="280" width="40" height="84" rx="8" fill="#3B82F6"/>
+    <rect x="210" y="220" width="40" height="144" rx="8" fill="#6366F1"/>
+    <rect x="270" y="160" width="40" height="204" rx="8" fill="#8B5CF6"/>
+    <rect x="330" y="100" width="40" height="264" rx="8" fill="url(#gradient1)"/>
+    
+    <!-- Upward arrow -->
+    <path d="M350 80 L380 130 L362 130 L362 100 L338 100 L338 130 L320 130 Z" fill="#EC4899"/>
+    
+    <!-- Spark/surge effect -->
+    <circle cx="350" cy="70" r="8" fill="#FCD34D"/>
+    <circle cx="370" cy="55" r="5" fill="#FCD34D" opacity="0.7"/>
+    <circle cx="330" cy="60" r="4" fill="#FCD34D" opacity="0.5"/>
+  </g>
+  
+  <!-- S letter integrated subtly -->
+  <path d="M180 420 Q160 420 160 400 Q160 380 180 380 L200 380 Q220 380 220 360 Q220 340 200 340" 
+        stroke="url(#gradient1)" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.6"/>
+</svg>

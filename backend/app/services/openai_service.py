@@ -69,9 +69,10 @@ Respond in this exact JSON format:
 async def generate_roadmap(profile: dict, target_role: str) -> dict:
     """
     Use GPT-4o-mini to generate a personalized learning roadmap with Udemy course links.
+    Requires OpenAI API key - no mock fallback.
     """
     if not client:
-        return get_mock_roadmap()
+        raise Exception("OpenAI API key not configured. Please set OPENAI_API_KEY in environment variables.")
     
     skills_str = ", ".join([s.get("name", "") for s in profile.get("skillGraph", profile.get("skills", []))])
     skill_gaps = profile.get("skillGaps", [])
@@ -159,16 +160,17 @@ Respond in this exact JSON format:
         return result
     except Exception as e:
         print(f"OpenAI API error: {e}")
-        return get_mock_roadmap()
+        raise Exception(f"Failed to generate roadmap: {str(e)}")
 
 
 async def generate_bonus_topics(week_focus: str, target_role: str) -> dict:
     """
     Generate bonus topics for fast learners who complete a week quickly.
     Includes both Udemy courses and YouTube alternatives.
+    Requires OpenAI API key.
     """
     if not client:
-        return get_mock_bonus_topics(week_focus)
+        raise Exception("OpenAI API key not configured")
     
     prompt = f"""The user is a fast learner who completed the "{week_focus}" week quickly while preparing for "{target_role}".
 
@@ -234,7 +236,7 @@ Respond in this exact JSON format:
         return result
     except Exception as e:
         print(f"OpenAI API error generating bonus topics: {e}")
-        return get_mock_bonus_topics(week_focus)
+        raise Exception(f"Failed to generate bonus topics: {str(e)}")
 
 
 def get_mock_bonus_topics(focus: str) -> dict:
@@ -448,7 +450,33 @@ def get_mock_skill_graph() -> dict:
     }
 
 
-def get_mock_roadmap() -> dict:
+def get_mock_roadmap(target_role: str = "Senior Frontend Engineer") -> dict:
+    """Return role-specific mock roadmap based on target role."""
+    
+    # Normalize role for matching
+    role_lower = target_role.lower()
+    
+    # Backend/Python focused roles
+    if any(kw in role_lower for kw in ["backend", "python", "django", "flask", "data engineer", "ml engineer", "machine learning"]):
+        return get_backend_roadmap(target_role)
+    
+    # Full Stack roles
+    if any(kw in role_lower for kw in ["full stack", "fullstack"]):
+        return get_fullstack_roadmap(target_role)
+    
+    # DevOps/Cloud roles
+    if any(kw in role_lower for kw in ["devops", "cloud", "sre", "infrastructure", "platform"]):
+        return get_devops_roadmap(target_role)
+    
+    # Data Science roles
+    if any(kw in role_lower for kw in ["data scientist", "data analyst", "analytics"]):
+        return get_data_science_roadmap(target_role)
+    
+    # Default: Frontend focused
+    return get_frontend_roadmap(target_role)
+
+
+def get_frontend_roadmap(target_role: str) -> dict:
     return {
         "weeks": [
             {

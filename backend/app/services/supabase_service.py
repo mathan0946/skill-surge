@@ -23,8 +23,7 @@ async def create_profile(user_id: str, profile_data: dict) -> dict:
     Create or update a user profile in Supabase.
     """
     if not supabase:
-        print("Supabase client not initialized, using local storage")
-        return profile_data
+        raise Exception("Supabase not configured. Please set SUPABASE_URL and SUPABASE_SERVICE_KEY in environment variables.")
     
     try:
         # Prepare data for insertion
@@ -48,7 +47,7 @@ async def create_profile(user_id: str, profile_data: dict) -> dict:
         
     except Exception as e:
         print(f"Supabase error creating profile: {e}")
-        return {"success": False, "error": str(e)}
+        raise e
 
 
 async def get_profile(user_id: str) -> Optional[dict]:
@@ -56,7 +55,7 @@ async def get_profile(user_id: str) -> Optional[dict]:
     Get a user profile from Supabase.
     """
     if not supabase:
-        return None
+        raise Exception("Supabase not configured")
     
     try:
         result = supabase.table("profiles").select("*").eq("user_id", user_id).execute()
@@ -80,7 +79,7 @@ async def get_profile(user_id: str) -> Optional[dict]:
         
     except Exception as e:
         print(f"Supabase error getting profile: {e}")
-        return None
+        raise e
 
 
 async def save_roadmap(user_id: str, roadmap_data: dict, target_role: str) -> dict:
@@ -88,16 +87,21 @@ async def save_roadmap(user_id: str, roadmap_data: dict, target_role: str) -> di
     Save a user's roadmap to Supabase.
     """
     if not supabase:
-        return roadmap_data
+        raise Exception("Supabase not configured")
     
     try:
+        # Calculate total tasks
+        weeks = roadmap_data.get("weeks", [])
+        total_tasks = sum(len(w.get("tasks", [])) for w in weeks)
+        
         record = {
             "user_id": user_id,
             "target_role": target_role,
-            "weeks": json.dumps(roadmap_data.get("weeks", [])),
+            "weeks": json.dumps(weeks),
             "predicted_ready_date": roadmap_data.get("predictedReadyDate", "10 weeks"),
-            "total_tasks": roadmap_data.get("totalTasks", 0),
+            "total_tasks": total_tasks,
             "estimated_hours_per_week": roadmap_data.get("estimatedHoursPerWeek", 10),
+            "task_completion_times": json.dumps(roadmap_data.get("taskCompletionTimes", {})),
         }
         
         # Use composite key for upsert (user_id, target_role)
@@ -109,7 +113,7 @@ async def save_roadmap(user_id: str, roadmap_data: dict, target_role: str) -> di
         
     except Exception as e:
         print(f"Supabase error saving roadmap: {e}")
-        return {"success": False, "error": str(e)}
+        raise e
 
 
 async def get_roadmap(user_id: str) -> Optional[dict]:
@@ -117,10 +121,10 @@ async def get_roadmap(user_id: str) -> Optional[dict]:
     Get a user's roadmap from Supabase.
     """
     if not supabase:
-        return None
+        raise Exception("Supabase not configured")
     
     try:
-        result = supabase.table("roadmaps").select("*").eq("user_id", user_id).execute()
+        result = supabase.table("roadmaps").select("*").eq("user_id", user_id).order("created_at", desc=True).limit(1).execute()
         
         if result.data and len(result.data) > 0:
             roadmap = result.data[0]
@@ -133,12 +137,76 @@ async def get_roadmap(user_id: str) -> Optional[dict]:
                 "totalTasks": roadmap.get("total_tasks"),
                 "estimatedHoursPerWeek": roadmap.get("estimated_hours_per_week"),
                 "createdAt": roadmap.get("created_at"),
+                "taskCompletionTimes": json.loads(roadmap.get("task_completion_times", "{}")),
             }
         return None
         
     except Exception as e:
         print(f"Supabase error getting roadmap: {e}")
-        return None
+        raise e
+
+
+async def update_roadmap_task(user_id: str, roadmap: dict) -> dict:
+    """
+    Update a roadmap's tasks in Supabase (for task completion updates).
+    """
+    if not supabase:
+        raise Exception("Supabase not configured")
+    
+    try:
+        target_role = roadmap.get("targetRole", "Software Engineer")
+        record = {
+            "weeks": json.dumps(roadmap.get("weeks", [])),
+            "total_tasks": roadmap.get("totalTasks", 0),
+            "task_completion_times": json.dumps(roadmap.get("taskCompletionTimes", {})),
+        }
+        
+        result = supabase.table("roadmaps").update(record).eq("user_id", user_id).eq("target_role", target_role).execute()
+        
+        if result.data:
+            return {"success": True, "data": result.data[0]}
+        return {"success": False, "error": "No data returned"}
+        
+    except Exception as e:
+        print(f"Supabase error updating roadmap task: {e}")
+        raise e
+
+
+async def record_task_completed(user_id: str) -> dict:
+    """
+    Record a task completion for the day (increments tasks_completed in user_progress).
+    """
+    if not supabase:
+        raise Exception("Supabase not configured")
+    
+    try:
+        today = date.today().isoformat()
+        
+        # Check if there's already a record for today
+        existing = supabase.table("user_progress").select("*").eq("user_id", user_id).eq("date", today).execute()
+        
+        if existing.data:
+            # Update existing record
+            current = existing.data[0]
+            new_count = current.get("tasks_completed", 0) + 1
+            result = supabase.table("user_progress").update({
+                "tasks_completed": new_count,
+            }).eq("user_id", user_id).eq("date", today).execute()
+        else:
+            # Insert new record
+            result = supabase.table("user_progress").insert({
+                "user_id": user_id,
+                "date": today,
+                "problems_solved": 0,
+                "tasks_completed": 1,
+                "streak_days": 1,
+            }).execute()
+        
+        return {"success": True}
+        
+    except Exception as e:
+        print(f"Error recording task completion: {e}")
+        raise e
 
 
 async def save_interview_session(user_id: str, interview_data: dict) -> dict:
@@ -146,7 +214,7 @@ async def save_interview_session(user_id: str, interview_data: dict) -> dict:
     Save an interview session to Supabase.
     """
     if not supabase:
-        return interview_data
+        raise Exception("Supabase not configured")
     
     try:
         record = {
@@ -174,12 +242,7 @@ async def get_user_progress(user_id: str) -> dict:
     Get user's overall progress statistics.
     """
     if not supabase:
-        return {
-            "problemsSolved": 0,
-            "streak": 0,
-            "matchScore": 0,
-            "weeksCompleted": 0,
-        }
+        raise Exception("Supabase not configured")
     
     try:
         # Get profile for skill score
@@ -214,12 +277,7 @@ async def get_user_progress(user_id: str) -> dict:
         
     except Exception as e:
         print(f"Supabase error getting progress: {e}")
-        return {
-            "problemsSolved": 0,
-            "streak": 0,
-            "matchScore": 0,
-            "weeksCompleted": 0,
-        }
+        raise e
 
 
 async def calculate_streak(user_id: str) -> dict:
@@ -227,7 +285,7 @@ async def calculate_streak(user_id: str) -> dict:
     Calculate the user's current streak based on consecutive days of activity.
     """
     if not supabase:
-        return {"streak": 0, "lastActiveDate": None}
+        raise Exception("Supabase not configured")
     
     try:
         # Get last 60 days of progress ordered by date descending
@@ -276,7 +334,7 @@ async def record_problem_completed(user_id: str, problem_title: str) -> dict:
     Record a completed problem and update streak.
     """
     if not supabase:
-        return {"success": False, "error": "Database not available"}
+        raise Exception("Supabase not configured")
     
     try:
         today = date.today().isoformat()
@@ -321,7 +379,7 @@ async def record_problem_completed(user_id: str, problem_title: str) -> dict:
         
     except Exception as e:
         print(f"Error recording problem completion: {e}")
-        return {"success": False, "error": str(e)}
+        raise e
 
 
 async def get_completed_problems(user_id: str) -> list:
@@ -330,14 +388,14 @@ async def get_completed_problems(user_id: str) -> list:
     Note: For detailed problem tracking, we'd need a separate table. This returns progress summary.
     """
     if not supabase:
-        return []
+        raise Exception("Supabase not configured")
     
     try:
         result = supabase.table("user_progress").select("date, problems_solved").eq("user_id", user_id).order("date", desc=True).limit(30).execute()
         return result.data if result.data else []
     except Exception as e:
         print(f"Error getting completed problems: {e}")
-        return []
+        raise e
 
 
 async def calculate_job_readiness(user_id: str, target_role: str) -> dict:
@@ -345,12 +403,7 @@ async def calculate_job_readiness(user_id: str, target_role: str) -> dict:
     Calculate job readiness forecast based on actual progress.
     """
     if not supabase:
-        return {
-            "readinessScore": 0,
-            "weeksUntilReady": 10,
-            "estimatedDate": (date.today() + timedelta(weeks=10)).isoformat(),
-            "factors": {}
-        }
+        raise Exception("Supabase not configured")
     
     try:
         profile = await get_profile(user_id)
@@ -415,9 +468,4 @@ async def calculate_job_readiness(user_id: str, target_role: str) -> dict:
         
     except Exception as e:
         print(f"Error calculating job readiness: {e}")
-        return {
-            "readinessScore": 0,
-            "weeksUntilReady": 10,
-            "estimatedDate": (date.today() + timedelta(weeks=10)).isoformat(),
-            "factors": {}
-        }
+        raise e
