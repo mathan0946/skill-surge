@@ -20,13 +20,13 @@ if settings.supabase_url and settings.supabase_service_key:
 
 async def create_profile(user_id: str, profile_data: dict) -> dict:
     """
-    Create or update a user profile in Supabase.
+    Create or update a user profile in Supabase with full knowledge graph data.
     """
     if not supabase:
         raise Exception("Supabase not configured. Please set SUPABASE_URL and SUPABASE_SERVICE_KEY in environment variables.")
     
     try:
-        # Prepare data for insertion
+        # Core fields that always exist
         record = {
             "user_id": user_id,
             "skills": json.dumps(profile_data.get("skills", [])),
@@ -38,7 +38,34 @@ async def create_profile(user_id: str, profile_data: dict) -> dict:
             "skill_gaps": json.dumps(profile_data.get("skillGaps", [])),
         }
         
-        # Upsert (insert or update)
+        # Extended fields for full knowledge graph
+        extended_fields = {}
+        if "projects" in profile_data:
+            extended_fields["projects"] = json.dumps(profile_data["projects"])
+        if "achievements" in profile_data:
+            extended_fields["achievements"] = json.dumps(profile_data["achievements"])
+        if "certifications" in profile_data:
+            extended_fields["certifications"] = json.dumps(profile_data["certifications"])
+        if "totalYearsExperience" in profile_data:
+            extended_fields["total_years_experience"] = profile_data["totalYearsExperience"]
+        if "seniorityLevel" in profile_data:
+            extended_fields["seniority_level"] = profile_data["seniorityLevel"]
+        
+        # Try with extended fields first, fallback to core fields only
+        if extended_fields:
+            full_record = {**record, **extended_fields}
+            try:
+                result = supabase.table("profiles").upsert(full_record, on_conflict="user_id").execute()
+                if result.data:
+                    return {"success": True, "data": result.data[0]}
+            except Exception as ext_error:
+                # If extended columns don't exist, try without them
+                if "column" in str(ext_error).lower():
+                    print(f"Some profile columns don't exist, saving core fields only: {ext_error}")
+                else:
+                    raise ext_error
+        
+        # Fallback to core fields only
         result = supabase.table("profiles").upsert(record, on_conflict="user_id").execute()
         
         if result.data:
@@ -52,7 +79,7 @@ async def create_profile(user_id: str, profile_data: dict) -> dict:
 
 async def get_profile(user_id: str) -> Optional[dict]:
     """
-    Get a user profile from Supabase.
+    Get a user profile from Supabase with full knowledge graph data.
     """
     if not supabase:
         raise Exception("Supabase not configured")
@@ -62,8 +89,8 @@ async def get_profile(user_id: str) -> Optional[dict]:
         
         if result.data and len(result.data) > 0:
             profile = result.data[0]
-            # Parse JSON fields
-            return {
+            # Parse JSON fields - handle both core and extended fields
+            profile_dict = {
                 "id": profile.get("id"),
                 "userId": profile.get("user_id"),
                 "skills": json.loads(profile.get("skills", "[]")),
@@ -75,6 +102,20 @@ async def get_profile(user_id: str) -> Optional[dict]:
                 "skillGaps": json.loads(profile.get("skill_gaps", "[]")),
                 "createdAt": profile.get("created_at"),
             }
+            
+            # Add extended fields if they exist
+            if profile.get("projects"):
+                profile_dict["projects"] = json.loads(profile["projects"])
+            if profile.get("achievements"):
+                profile_dict["achievements"] = json.loads(profile["achievements"])
+            if profile.get("certifications"):
+                profile_dict["certifications"] = json.loads(profile["certifications"])
+            if profile.get("total_years_experience") is not None:
+                profile_dict["totalYearsExperience"] = profile["total_years_experience"]
+            if profile.get("seniority_level"):
+                profile_dict["seniorityLevel"] = profile["seniority_level"]
+            
+            return profile_dict
         return None
         
     except Exception as e:
@@ -86,6 +127,8 @@ async def save_roadmap(user_id: str, roadmap_data: dict, target_role: str) -> di
     """
     Save a user's roadmap to Supabase.
     """
+    print(f"[DEBUG] save_roadmap called with user_id={user_id}, target_role={target_role}")
+    
     if not supabase:
         raise Exception("Supabase not configured")
     
@@ -94,22 +137,50 @@ async def save_roadmap(user_id: str, roadmap_data: dict, target_role: str) -> di
         weeks = roadmap_data.get("weeks", [])
         total_tasks = sum(len(w.get("tasks", [])) for w in weeks)
         
+        print(f"[DEBUG] Weeks count: {len(weeks)}, Total tasks: {total_tasks}")
+        
+        # Get estimated hours - ensure it's an integer
+        estimated_hours = roadmap_data.get("estimatedHoursPerWeek", 10)
+        if isinstance(estimated_hours, float):
+            estimated_hours = int(estimated_hours)
+        
         record = {
             "user_id": user_id,
             "target_role": target_role,
             "weeks": json.dumps(weeks),
             "predicted_ready_date": roadmap_data.get("predictedReadyDate", "10 weeks"),
-            "total_tasks": total_tasks,
-            "estimated_hours_per_week": roadmap_data.get("estimatedHoursPerWeek", 10),
+            "total_tasks": int(total_tasks),
+            "estimated_hours_per_week": estimated_hours,
             "task_completion_times": json.dumps(roadmap_data.get("taskCompletionTimes", {})),
         }
         
-        # Use composite key for upsert (user_id, target_role)
-        result = supabase.table("roadmaps").upsert(record, on_conflict="user_id,target_role").execute()
+        print(f"[DEBUG] Attempting to save roadmap record...")
         
-        if result.data:
-            return {"success": True, "data": result.data[0]}
-        return {"success": False, "error": "No data returned"}
+        # First, try simple insert without upsert to avoid constraint issues
+        try:
+            # Check if record exists first
+            existing = supabase.table("roadmaps").select("id").eq("user_id", user_id).execute()
+            print(f"[DEBUG] Existing roadmaps for user: {len(existing.data) if existing.data else 0}")
+            
+            if existing.data and len(existing.data) > 0:
+                # Update existing
+                result = supabase.table("roadmaps").update(record).eq("user_id", user_id).execute()
+                print(f"[DEBUG] Update result: {result.data}")
+            else:
+                # Insert new
+                result = supabase.table("roadmaps").insert(record).execute()
+                print(f"[DEBUG] Insert result: {result.data}")
+            
+            if result.data:
+                print(f"[DEBUG] Roadmap saved successfully!")
+                return {"success": True, "data": result.data[0]}
+            else:
+                print(f"[DEBUG] No data returned from save operation")
+                return {"success": False, "error": "No data returned"}
+                
+        except Exception as db_error:
+            print(f"[DEBUG] Database error: {db_error}")
+            raise db_error
         
     except Exception as e:
         print(f"Supabase error saving roadmap: {e}")
@@ -120,15 +191,20 @@ async def get_roadmap(user_id: str) -> Optional[dict]:
     """
     Get a user's roadmap from Supabase.
     """
+    print(f"[DEBUG] get_roadmap called with user_id={user_id}")
+    
     if not supabase:
         raise Exception("Supabase not configured")
     
     try:
         result = supabase.table("roadmaps").select("*").eq("user_id", user_id).order("created_at", desc=True).limit(1).execute()
         
+        print(f"[DEBUG] Query result: {len(result.data) if result.data else 0} records found")
+        
         if result.data and len(result.data) > 0:
             roadmap = result.data[0]
-            return {
+            print(f"[DEBUG] Found roadmap id={roadmap.get('id')}, target_role={roadmap.get('target_role')}")
+            result_dict = {
                 "id": roadmap.get("id"),
                 "userId": roadmap.get("user_id"),
                 "targetRole": roadmap.get("target_role"),
@@ -139,6 +215,11 @@ async def get_roadmap(user_id: str) -> Optional[dict]:
                 "createdAt": roadmap.get("created_at"),
                 "taskCompletionTimes": json.loads(roadmap.get("task_completion_times", "{}")),
             }
+            # Include overview if present
+            if roadmap.get("overview"):
+                result_dict["overview"] = json.loads(roadmap.get("overview"))
+            return result_dict
+        print(f"[DEBUG] No roadmap found for user_id={user_id}")
         return None
         
     except Exception as e:

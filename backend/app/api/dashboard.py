@@ -10,8 +10,6 @@ from app.services.supabase_service import (
     record_problem_completed,
     calculate_job_readiness,
 )
-from app.api.profile import profiles_db
-from app.api.roadmap import roadmaps_db
 
 router = APIRouter()
 
@@ -29,9 +27,9 @@ async def get_dashboard(user_id: str):
     """
     Get dashboard data for a user with real streak and progress data.
     """
-    # Try to get from Supabase first, fall back to in-memory
-    profile = await get_supabase_profile(user_id) or profiles_db.get(user_id, {})
-    roadmap = await get_supabase_roadmap(user_id) or roadmaps_db.get(user_id, {})
+    # Get from Supabase
+    profile = await get_supabase_profile(user_id) or {}
+    roadmap = await get_supabase_roadmap(user_id) or {}
     
     # Get real progress data
     progress = await get_user_progress(user_id)
@@ -118,9 +116,9 @@ async def get_daily_task(user_id: str):
     """
     Get today's recommended LeetCode problem with full details.
     """
-    # Try Supabase first, then in-memory
-    profile = await get_supabase_profile(user_id) or profiles_db.get(user_id, {})
-    roadmap = await get_supabase_roadmap(user_id) or roadmaps_db.get(user_id, {})
+    # Get from Supabase
+    profile = await get_supabase_profile(user_id) or {}
+    roadmap = await get_supabase_roadmap(user_id) or {}
     target_role = roadmap.get("targetRole", profile.get("targetRole", "Senior Frontend Engineer"))
     completed_problems = completed_problems_db.get(user_id, [])
     
@@ -167,7 +165,7 @@ async def get_job_readiness(user_id: str):
     """
     Get detailed job readiness forecast.
     """
-    roadmap = await get_supabase_roadmap(user_id) or roadmaps_db.get(user_id, {})
+    roadmap = await get_supabase_roadmap(user_id) or {}
     target_role = roadmap.get("targetRole", "Software Engineer")
     
     readiness = await calculate_job_readiness(user_id, target_role)
@@ -184,7 +182,7 @@ async def get_progress(user_id: str):
     """
     Get detailed progress stats with real data.
     """
-    roadmap = await get_supabase_roadmap(user_id) or roadmaps_db.get(user_id, {})
+    roadmap = await get_supabase_roadmap(user_id) or {}
     progress = await get_user_progress(user_id)
     job_readiness = await calculate_job_readiness(user_id, roadmap.get("targetRole", "Software Engineer"))
     

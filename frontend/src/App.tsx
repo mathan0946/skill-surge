@@ -11,6 +11,8 @@ import { Onboarding } from './pages/Onboarding';
 import { Dashboard } from './pages/Dashboard';
 import { Roadmap } from './pages/Roadmap';
 import { Interview } from './pages/Interview';
+import SubjectOverview from './pages/SubjectOverview';
+import SubjectDetail from './pages/SubjectDetail';
 import './index.css';
 
 const queryClient = new QueryClient();
@@ -42,6 +44,16 @@ function App() {
                 <Route path="/roadmap" element={
                   <ProtectedRoute>
                     <Roadmap />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subject-overview" element={
+                  <ProtectedRoute>
+                    <SubjectOverview />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subject-detail" element={
+                  <ProtectedRoute>
+                    <SubjectDetail />
                   </ProtectedRoute>
                 } />
                 <Route path="/interview" element={

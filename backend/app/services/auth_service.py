@@ -77,6 +77,7 @@ async def register_user(credentials: UserRegistration) -> AuthResponse:
 async def login_user(credentials: UserCredentials) -> AuthResponse:
     """
     Login user with Supabase Auth.
+    Requires email verification before allowing login.
     """
     try:
         supabase = get_supabase_client()
@@ -88,6 +89,15 @@ async def login_user(credentials: UserCredentials) -> AuthResponse:
         })
         
         if response.user and response.session:
+            # Check if email is verified
+            email_confirmed = response.user.email_confirmed_at is not None
+            
+            if not email_confirmed:
+                return AuthResponse(
+                    success=False,
+                    error="Please verify your email before logging in. Check your inbox for the verification link."
+                )
+            
             return AuthResponse(
                 success=True,
                 user={
@@ -95,6 +105,7 @@ async def login_user(credentials: UserCredentials) -> AuthResponse:
                     "email": response.user.email,
                     "full_name": response.user.user_metadata.get("full_name", ""),
                     "created_at": str(response.user.created_at),
+                    "email_verified": email_confirmed,
                 },
                 access_token=response.session.access_token,
                 refresh_token=response.session.refresh_token,
@@ -109,6 +120,8 @@ async def login_user(credentials: UserCredentials) -> AuthResponse:
         error_msg = str(e)
         if "Invalid login credentials" in error_msg:
             return AuthResponse(success=False, error="Invalid email or password")
+        if "Email not confirmed" in error_msg:
+            return AuthResponse(success=False, error="Please verify your email before logging in. Check your inbox for the verification link.")
         return AuthResponse(success=False, error=f"Login error: {error_msg}")
 
 

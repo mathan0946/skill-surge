@@ -124,6 +124,13 @@ export const rolesApi = {
     const response = await api.post('/roles/recommendations', { skills });
     return response.data;
   },
+  
+  getRecommendationsWithLevels: async (
+    skills: Array<{ name: string; category: string; proficiency: number }>
+  ) => {
+    const response = await api.post('/roles/recommendations-with-levels', { skills });
+    return response.data;
+  },
 };
 
 // Roadmap API
@@ -133,6 +140,22 @@ export const roadmapApi = {
       userId: userId,
       targetRole: targetRole,
     });
+    return response.data;
+  },
+  
+  generateComprehensive: async (data: {
+    userId: string;
+    targetRole: string;
+    skills: Array<{ name: string; category: string; proficiency: number }>;
+    missingSkills: string[];
+    timeConstraint: {
+      weeks: number;
+      hoursPerDay: number;
+      intensity: string;
+    };
+    resumeText: string;
+  }) => {
+    const response = await api.post('/roadmap/generate-comprehensive', data);
     return response.data;
   },
   

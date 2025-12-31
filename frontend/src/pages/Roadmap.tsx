@@ -5,137 +5,15 @@ import { Card, CardContent } from '../components/ui/Card';
 import { Progress } from '../components/ui/Progress';
 import { useApp } from '../context/AppContext';
 import { roadmapApi } from '../services/api';
-import { Calendar, Clock, Target, Loader2, Sparkles, TrendingUp } from 'lucide-react';
-
-// Mock roadmap data
-const mockRoadmap = {
-  weeks: [
-    {
-      id: 'w1',
-      number: 1,
-      title: 'Fundamentals & Assessment',
-      description: 'Review core concepts and establish baseline',
-      focus: 'Data Structures',
-      tasks: [
-        { id: 't1', title: 'Two Sum', type: 'problem' as const, duration: '30 min', reason: '95% interview frequency at Google', completed: true },
-        { id: 't2', title: 'Valid Parentheses', type: 'problem' as const, duration: '25 min', reason: 'Stack fundamentals', completed: true },
-        { id: 't3', title: 'Big O Notation Course', type: 'course' as const, duration: '2 hrs', reason: 'Foundation for optimization', completed: false },
-      ],
-      completed: false,
-    },
-    {
-      id: 'w2',
-      number: 2,
-      title: 'Arrays & Strings',
-      description: 'Master array manipulation techniques',
-      focus: 'Arrays',
-      tasks: [
-        { id: 't4', title: 'Best Time to Buy Stock', type: 'problem' as const, duration: '30 min', reason: 'Sliding window intro' },
-        { id: 't5', title: 'Container With Most Water', type: 'problem' as const, duration: '35 min', reason: 'Two pointer technique' },
-        { id: 't6', title: 'Product of Array Except Self', type: 'problem' as const, duration: '40 min', reason: 'Prefix/suffix pattern' },
-      ],
-    },
-    {
-      id: 'w3',
-      number: 3,
-      title: 'Linked Lists & Trees',
-      description: 'Pointer manipulation and tree traversal',
-      focus: 'Trees',
-      tasks: [
-        { id: 't7', title: 'Reverse Linked List', type: 'problem' as const, duration: '25 min', reason: 'Core linked list skill' },
-        { id: 't8', title: 'Binary Tree Inorder Traversal', type: 'problem' as const, duration: '30 min', reason: 'Tree fundamentals' },
-        { id: 't9', title: 'Validate BST', type: 'problem' as const, duration: '35 min', reason: 'BST properties' },
-      ],
-    },
-    {
-      id: 'w4',
-      number: 4,
-      title: 'Dynamic Programming',
-      description: 'Breaking down complex problems',
-      focus: 'DP',
-      tasks: [
-        { id: 't10', title: 'Climbing Stairs', type: 'problem' as const, duration: '25 min', reason: 'DP introduction' },
-        { id: 't11', title: 'Coin Change', type: 'problem' as const, duration: '40 min', reason: 'Classic DP pattern' },
-        { id: 't12', title: 'Dynamic Programming Course', type: 'course' as const, duration: '3 hrs', reason: 'Master DP patterns' },
-      ],
-    },
-    {
-      id: 'w5',
-      number: 5,
-      title: 'Graph Algorithms',
-      description: 'BFS, DFS, and graph traversal',
-      focus: 'Graphs',
-      tasks: [
-        { id: 't13', title: 'Number of Islands', type: 'problem' as const, duration: '35 min', reason: 'BFS/DFS classic' },
-        { id: 't14', title: 'Course Schedule', type: 'problem' as const, duration: '40 min', reason: 'Topological sort' },
-        { id: 't15', title: 'Clone Graph', type: 'problem' as const, duration: '35 min', reason: 'Graph traversal' },
-      ],
-    },
-    {
-      id: 'w6',
-      number: 6,
-      title: 'System Design Basics',
-      description: 'Introduction to system design concepts',
-      focus: 'System Design',
-      tasks: [
-        { id: 't16', title: 'System Design Primer', type: 'course' as const, duration: '4 hrs', reason: 'Foundation for senior roles' },
-        { id: 't17', title: 'Design URL Shortener', type: 'project' as const, duration: '2 hrs', reason: 'Entry-level system design' },
-      ],
-    },
-    {
-      id: 'w7',
-      number: 7,
-      title: 'Advanced System Design',
-      description: 'Scalability and distributed systems',
-      focus: 'System Design',
-      tasks: [
-        { id: 't18', title: 'Design Twitter Feed', type: 'project' as const, duration: '3 hrs', reason: 'Real-world complexity' },
-        { id: 't19', title: 'Design Rate Limiter', type: 'project' as const, duration: '2 hrs', reason: 'Common interview question' },
-      ],
-    },
-    {
-      id: 'w8',
-      number: 8,
-      title: 'Behavioral Preparation',
-      description: 'STAR method and communication skills',
-      focus: 'Behavioral',
-      tasks: [
-        { id: 't20', title: 'Behavioral Interview Course', type: 'course' as const, duration: '2 hrs', reason: 'STAR method mastery' },
-        { id: 't21', title: 'AI Mock Interview #1', type: 'interview' as const, duration: '45 min', reason: 'Practice with feedback' },
-      ],
-    },
-    {
-      id: 'w9',
-      number: 9,
-      title: 'Interview Simulation',
-      description: 'Full interview practice rounds',
-      focus: 'Mock Interviews',
-      tasks: [
-        { id: 't22', title: 'Technical Mock Interview', type: 'interview' as const, duration: '60 min', reason: 'Simulate real conditions' },
-        { id: 't23', title: 'System Design Mock', type: 'interview' as const, duration: '45 min', reason: 'Senior role preparation' },
-      ],
-    },
-    {
-      id: 'w10',
-      number: 10,
-      title: 'Final Preparation',
-      description: 'Review, polish, and apply',
-      focus: 'Review',
-      tasks: [
-        { id: 't24', title: 'Review All Hard Problems', type: 'problem' as const, duration: '3 hrs', reason: 'Reinforce patterns' },
-        { id: 't25', title: 'Final Mock Interview', type: 'interview' as const, duration: '60 min', reason: 'Final assessment' },
-        { id: 't26', title: 'Apply to Target Companies', type: 'project' as const, duration: '2 hrs', reason: "You're ready!" },
-      ],
-    },
-  ],
-};
+import { Target, Loader2, Sparkles, TrendingUp, Calendar, Clock } from 'lucide-react';
 
 export function Roadmap() {
   const { selectedRole, userId } = useApp();
-  const [roadmap, setRoadmap] = useState<{ weeks: any[] }>(mockRoadmap);
-  const [isLoading, setIsLoading] = useState(false);
+  const [roadmap, setRoadmap] = useState<{ weeks: any[] } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [overallProgress, setOverallProgress] = useState({ completed: 0, total: 0, percentage: 0 });
   const [bonusMessage, setBonusMessage] = useState<string | null>(null);
+  const [noRoadmap, setNoRoadmap] = useState(false);
   const currentWeek = 1;
 
   // Calculate progress from roadmap
@@ -157,34 +35,43 @@ export function Roadmap() {
 
   useEffect(() => {
     const fetchRoadmap = async () => {
-      if (selectedRole) {
-        setIsLoading(true);
-        try {
-          const response = await roadmapApi.generate(userId, selectedRole.title);
-          if (response.roadmap?.weeks) {
-            setRoadmap(response.roadmap);
-            setOverallProgress(calculateProgress(response.roadmap.weeks));
-          } else if (response.weeks) {
-            setRoadmap(response);
-            setOverallProgress(calculateProgress(response.weeks));
-          }
-        } catch (error) {
-          console.error('Error fetching roadmap:', error);
-          setOverallProgress(calculateProgress(mockRoadmap.weeks));
-        } finally {
-          setIsLoading(false);
+      setIsLoading(true);
+      setNoRoadmap(false);
+      try {
+        // Fetch the saved roadmap from database instead of regenerating
+        const response = await roadmapApi.get(userId);
+        if (response.roadmap?.weeks) {
+          setRoadmap(response.roadmap);
+          setOverallProgress(calculateProgress(response.roadmap.weeks));
+        } else if (response.weeks) {
+          setRoadmap(response);
+          setOverallProgress(calculateProgress(response.weeks));
+        } else {
+          // No roadmap found
+          setNoRoadmap(true);
         }
+      } catch (error: any) {
+        console.error('Error fetching roadmap:', error);
+        // Check if it's a 404 (no roadmap found)
+        if (error?.response?.status === 404) {
+          setNoRoadmap(true);
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchRoadmap();
-  }, [selectedRole, userId]);
+  }, [userId]);
 
   const handleTaskComplete = async (weekId: string, taskId: string, currentCompleted: boolean) => {
+    if (!roadmap) return;
+    
     const newCompleted = !currentCompleted;
     
     // Optimistic update
     setRoadmap((prev) => {
+      if (!prev) return prev;
       const updated = {
         ...prev,
         weeks: prev.weeks.map((week: any) =>
@@ -217,24 +104,27 @@ export function Roadmap() {
         
         // Add bonus tasks to the roadmap
         if (result.bonusTopics?.tasks) {
-          setRoadmap((prev) => ({
-            ...prev,
-            weeks: prev.weeks.map((week: any) =>
-              week.id === weekId
-                ? {
-                    ...week,
-                    tasks: [
-                      ...week.tasks,
-                      ...result.bonusTopics.tasks.map((t: any, idx: number) => ({
-                        ...t,
-                        id: `${weekId}_bonus_${idx}`,
-                        isBonus: true,
-                      })),
-                    ],
-                  }
-                : week
-            ),
-          }));
+          setRoadmap((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              weeks: prev.weeks.map((week: any) =>
+                week.id === weekId
+                  ? {
+                      ...week,
+                      tasks: [
+                        ...week.tasks,
+                        ...result.bonusTopics.tasks.map((t: any, idx: number) => ({
+                          ...t,
+                          id: `${weekId}_bonus_${idx}`,
+                          isBonus: true,
+                        })),
+                      ],
+                    }
+                  : week
+              ),
+            };
+          });
         }
         
         // Clear message after 5 seconds
@@ -243,20 +133,25 @@ export function Roadmap() {
     } catch (error) {
       console.error('Error updating task:', error);
       // Revert on error
-      setRoadmap((prev) => ({
-        ...prev,
-        weeks: prev.weeks.map((week: any) =>
-          week.id === weekId
-            ? {
-                ...week,
-                tasks: week.tasks.map((task: any) =>
-                  task.id === taskId ? { ...task, completed: currentCompleted } : task
-                ),
-              }
-            : week
-        ),
-      }));
-      setOverallProgress(calculateProgress(roadmap.weeks));
+      setRoadmap((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          weeks: prev.weeks.map((week: any) =>
+            week.id === weekId
+              ? {
+                  ...week,
+                  tasks: week.tasks.map((task: any) =>
+                    task.id === taskId ? { ...task, completed: currentCompleted } : task
+                  ),
+                }
+              : week
+          ),
+        };
+      });
+      if (roadmap) {
+        setOverallProgress(calculateProgress(roadmap.weeks));
+      }
     }
   };
 
@@ -265,8 +160,28 @@ export function Roadmap() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
-          <p className="text-lg text-white">Generating your personalized roadmap...</p>
-          <p className="text-sm text-gray-400 mt-2">This may take a few seconds</p>
+          <p className="text-lg text-white">Loading your roadmap...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (noRoadmap || !roadmap) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <Sparkles className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">No Roadmap Yet</h2>
+          <p className="text-gray-400 mb-6">
+            Complete the onboarding process to generate your personalized learning roadmap.
+          </p>
+          <a 
+            href="/onboarding" 
+            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Target className="w-5 h-5" />
+            Start Onboarding
+          </a>
         </div>
       </div>
     );

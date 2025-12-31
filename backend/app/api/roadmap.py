@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
-from app.services.openai_service import generate_roadmap, generate_bonus_topics
+from app.services.openai_service import generate_roadmap, generate_bonus_topics, generate_comprehensive_roadmap
 from app.services.supabase_service import (
     save_roadmap, 
     get_roadmap as get_roadmap_from_db,
@@ -20,9 +20,85 @@ class RoadmapRequest(BaseModel):
     targetRole: str
 
 
+class SkillWithLevel(BaseModel):
+    name: str
+    category: str
+    proficiency: int
+
+
+class TimeConstraint(BaseModel):
+    weeks: int
+    hoursPerDay: float
+    intensity: str
+
+
+class ComprehensiveRoadmapRequest(BaseModel):
+    userId: str
+    targetRole: str
+    skills: List[SkillWithLevel]
+    missingSkills: List[str]
+    timeConstraint: TimeConstraint
+    resumeText: str
+
+
 class TaskUpdate(BaseModel):
     completed: bool
     weekId: Optional[str] = None
+
+
+@router.post("/generate-comprehensive")
+async def create_comprehensive_roadmap(request: ComprehensiveRoadmapRequest):
+    """
+    Generate a comprehensive roadmap covering ALL subjects needed for the target role.
+    Considers skill proficiency levels and time constraints.
+    """
+    try:
+        # Convert skills to dict format
+        skills_list = [
+            {
+                "name": s.name,
+                "category": s.category,
+                "proficiency": s.proficiency
+            }
+            for s in request.skills
+        ]
+        
+        time_constraint = {
+            "weeks": request.timeConstraint.weeks,
+            "hoursPerDay": request.timeConstraint.hoursPerDay,
+            "intensity": request.timeConstraint.intensity
+        }
+        
+        # Generate comprehensive roadmap using AI
+        roadmap = await generate_comprehensive_roadmap(
+            skills=skills_list,
+            target_role=request.targetRole,
+            missing_skills=request.missingSkills,
+            time_constraint=time_constraint,
+            resume_text=request.resumeText
+        )
+        
+        # Add user metadata
+        roadmap["userId"] = request.userId
+        roadmap["targetRole"] = request.targetRole
+        roadmap["timeConstraint"] = time_constraint
+        roadmap["skillLevels"] = skills_list
+        roadmap["taskCompletionTimes"] = {
+            "weekStartTimes": {},
+            "completedTasks": {},
+        }
+        
+        # Save to Supabase
+        await save_roadmap(request.userId, roadmap, request.targetRole)
+        
+        return {
+            "success": True,
+            "roadmap": roadmap,
+        }
+        
+    except Exception as e:
+        print(f"Error generating comprehensive roadmap: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate roadmap: {str(e)}")
 
 
 @router.post("/generate")

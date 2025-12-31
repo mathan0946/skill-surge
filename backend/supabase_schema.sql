@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS roadmaps (
     user_id TEXT NOT NULL,
     target_role TEXT NOT NULL,
     weeks JSONB DEFAULT '[]'::jsonb,
+    overview JSONB DEFAULT NULL,
     predicted_ready_date TEXT DEFAULT '10 weeks',
     total_tasks INTEGER DEFAULT 0,
     estimated_hours_per_week INTEGER DEFAULT 10,
@@ -37,6 +38,60 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
                    WHERE table_name = 'roadmaps' AND column_name = 'task_completion_times') THEN
         ALTER TABLE roadmaps ADD COLUMN task_completion_times JSONB DEFAULT '{}'::jsonb;
+    END IF;
+END $$;
+
+-- Migration: Add overview column if it doesn't exist (for comprehensive roadmaps)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'roadmaps' AND column_name = 'overview') THEN
+        ALTER TABLE roadmaps ADD COLUMN overview JSONB DEFAULT NULL;
+    END IF;
+END $$;
+
+-- Migration: Add projects column to profiles if it doesn't exist
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'profiles' AND column_name = 'projects') THEN
+        ALTER TABLE profiles ADD COLUMN projects JSONB DEFAULT '[]'::jsonb;
+    END IF;
+END $$;
+
+-- Migration: Add achievements column to profiles if it doesn't exist
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'profiles' AND column_name = 'achievements') THEN
+        ALTER TABLE profiles ADD COLUMN achievements JSONB DEFAULT '[]'::jsonb;
+    END IF;
+END $$;
+
+-- Migration: Add certifications column to profiles if it doesn't exist
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'profiles' AND column_name = 'certifications') THEN
+        ALTER TABLE profiles ADD COLUMN certifications JSONB DEFAULT '[]'::jsonb;
+    END IF;
+END $$;
+
+-- Migration: Add total_years_experience column to profiles if it doesn't exist
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'profiles' AND column_name = 'total_years_experience') THEN
+        ALTER TABLE profiles ADD COLUMN total_years_experience INTEGER DEFAULT 0;
+    END IF;
+END $$;
+
+-- Migration: Add seniority_level column to profiles if it doesn't exist
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'profiles' AND column_name = 'seniority_level') THEN
+        ALTER TABLE profiles ADD COLUMN seniority_level TEXT DEFAULT 'Entry';
     END IF;
 END $$;
 

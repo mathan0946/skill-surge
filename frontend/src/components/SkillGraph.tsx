@@ -17,7 +17,7 @@ interface Skill {
   name: string;
   level: number;
   category: string;
-  connections: string[];
+  connections?: string[];
 }
 
 interface SkillGraphProps {
@@ -132,7 +132,7 @@ export function SkillGraph({ skills }: SkillGraphProps) {
     const addedEdges = new Set<string>();
     
     skills.forEach(skill => {
-      skill.connections.forEach(targetId => {
+      (skill.connections || []).forEach(targetId => {
         const edgeKey = [skill.id, targetId].sort().join('-');
         if (!addedEdges.has(edgeKey) && skills.find(s => s.id === targetId)) {
           addedEdges.add(edgeKey);

@@ -20,9 +20,12 @@ import {
   Award,
   Brain,
   Loader2,
+  Briefcase,
+  Trophy,
+  GraduationCap,
+  FolderKanban,
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-
 export function Dashboard() {
   const { selectedRole, profile } = useApp();
   const { user } = useAuth();
@@ -419,6 +422,165 @@ export function Dashboard() {
             </CardContent>
           </Card>
         </motion.div>
+
+        {/* Projects & Experience Section */}
+        {((profile?.projects && profile.projects.length > 0) || (profile?.experience && profile.experience.length > 0)) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6"
+          >
+            {/* Projects */}
+            {profile?.projects && profile.projects.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FolderKanban className="w-5 h-5 text-blue-500" />
+                    Projects ({profile.projects.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {profile.projects.slice(0, 4).map((project: any, idx: number) => (
+                    <div key={project.id || idx} className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-medium text-white">{project.name}</h4>
+                          <p className="text-sm text-gray-400 mt-1 line-clamp-2">{project.description}</p>
+                        </div>
+                        {project.role && (
+                          <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
+                            {project.role}
+                          </span>
+                        )}
+                      </div>
+                      {project.technologies?.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {project.technologies.slice(0, 5).map((tech: string, i: number) => (
+                            <span key={i} className="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded">
+                              {tech}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {project.impact && (
+                        <p className="text-xs text-green-400 mt-2">📈 {project.impact}</p>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Work Experience */}
+            {profile?.experience && profile.experience.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Briefcase className="w-5 h-5 text-green-500" />
+                    Experience
+                    {profile.totalYearsExperience && profile.totalYearsExperience > 0 && (
+                      <span className="text-sm font-normal text-gray-400">
+                        ({profile.totalYearsExperience}+ years)
+                      </span>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {profile.experience.slice(0, 4).map((exp: any, idx: number) => (
+                    <div key={idx} className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                      {typeof exp === 'string' ? (
+                        <p className="text-gray-300">{exp}</p>
+                      ) : (
+                        <>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h4 className="font-medium text-white">{exp.role}</h4>
+                              <p className="text-sm text-blue-400">{exp.company}</p>
+                            </div>
+                            <span className="text-xs text-gray-500">{exp.duration}</span>
+                          </div>
+                          {exp.highlights?.length > 0 && (
+                            <ul className="mt-2 space-y-1">
+                              {exp.highlights.slice(0, 2).map((h: string, i: number) => (
+                                <li key={i} className="text-xs text-gray-400">• {h}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+          </motion.div>
+        )}
+
+        {/* Achievements & Certifications Section */}
+        {((profile?.achievements && profile.achievements.length > 0) || (profile?.certifications && profile.certifications.length > 0)) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9 }}
+            className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6"
+          >
+            {/* Achievements */}
+            {profile?.achievements && profile.achievements.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Trophy className="w-5 h-5 text-yellow-500" />
+                    Achievements
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {profile.achievements.slice(0, 5).map((achievement: any, idx: number) => (
+                    <div key={achievement.id || idx} className="flex items-start gap-3 p-2 bg-gradient-to-r from-yellow-500/10 to-transparent rounded-lg">
+                      <div className="p-1.5 rounded-full bg-yellow-500/20">
+                        <Award className="w-4 h-4 text-yellow-500" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-white text-sm">{achievement.title}</h4>
+                        <p className="text-xs text-gray-400 mt-0.5">{achievement.description}</p>
+                        {achievement.metrics && (
+                          <p className="text-xs text-green-400 mt-1">{achievement.metrics}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Certifications */}
+            {profile?.certifications && profile.certifications.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5 text-purple-500" />
+                    Certifications
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {profile.certifications.slice(0, 5).map((cert: any, idx: number) => (
+                    <div key={cert.id || idx} className="flex items-center gap-3 p-2 bg-purple-500/10 rounded-lg">
+                      <div className="p-1.5 rounded-full bg-purple-500/20">
+                        <Award className="w-4 h-4 text-purple-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-white text-sm">{cert.name}</h4>
+                        <p className="text-xs text-gray-400">
+                          {cert.issuer} {cert.year && `• ${cert.year}`}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+          </motion.div>
+        )}
       </div>
     </div>
   );

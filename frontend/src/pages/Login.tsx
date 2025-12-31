@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { Loader2, Mail, Lock, Sparkles } from 'lucide-react';
+import { Loader2, Mail, Lock, AlertCircle } from 'lucide-react';
 
 export function Login() {
   const navigate = useNavigate();
@@ -14,6 +14,8 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const isVerificationError = error.toLowerCase().includes('verify') || error.toLowerCase().includes('verification');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,9 +62,21 @@ export function Login() {
                 <motion.div
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
+                  className={`p-3 rounded-lg flex items-start gap-3 text-sm ${
+                    isVerificationError 
+                      ? 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'
+                      : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                  }`}
                 >
-                  {error}
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p>{error}</p>
+                    {isVerificationError && (
+                      <p className="mt-2 text-yellow-300/70 text-xs">
+                        Check your spam folder if you don't see the email.
+                      </p>
+                    )}
+                  </div>
                 </motion.div>
               )}
 

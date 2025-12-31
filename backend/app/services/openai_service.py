@@ -9,23 +9,36 @@ client = OpenAI(api_key=settings.openai_api_key) if settings.openai_api_key else
 
 async def extract_skills_from_resume(resume_text: str) -> dict:
     """
-    Use GPT-4o-mini to extract skills and build a skill graph from resume text.
+    Use GPT-4o-mini to extract comprehensive profile data from resume text.
+    This includes skills with proficiency levels, projects, achievements, certifications, etc.
     """
     if not client:
         # Return mock data if no API key
         return get_mock_skill_graph()
     
-    prompt = f"""Analyze the following resume and extract:
-1. All technical skills with proficiency levels (0-100)
-2. Skill categories (Frontend, Backend, Database, DevOps, etc.)
-3. Connections between related skills
-4. Years of experience
-5. Key projects and achievements
+    # Truncate resume text to avoid token limits (max ~15000 chars for safety)
+    truncated_resume = resume_text[:15000] if len(resume_text) > 15000 else resume_text
+    
+    prompt = f"""You are an expert resume analyzer. Analyze the following resume text and extract ALL relevant information.
+Your job is to:
+1. Identify ALL technical and soft skills mentioned or implied
+2. Assess proficiency level (0-100) based on context clues like years of experience, project complexity, certifications
+3. Extract ALL projects with descriptions and technologies used
+4. Extract ALL achievements and accomplishments
+5. Identify certifications and courses
+6. Determine skill gaps for career growth
 
-Resume:
-{resume_text}
+IMPORTANT: 
+- Infer skill levels based on: years mentioned, project complexity, leadership roles, certifications
+- A skill mentioned in a senior role context = higher level (70-90)
+- A skill mentioned in junior context or as "learning" = lower level (30-50)
+- A skill with certifications = +10-20 boost
+- A skill used in multiple projects = higher level
 
-Respond in this exact JSON format:
+Resume Text:
+{truncated_resume}
+
+Respond with this EXACT JSON structure:
 {{
     "skills": [
         {{
@@ -34,14 +47,59 @@ Respond in this exact JSON format:
             "level": 85,
             "category": "Frontend",
             "connections": ["2", "3"],
-            "yearsOfExperience": 3
+            "yearsOfExperience": 3,
+            "evidence": "Used in 5 projects, mentioned in senior role"
         }}
     ],
-    "experience": ["Company 1 - Role - Duration"],
-    "education": ["Degree - Institution"],
-    "summary": "Brief professional summary",
-    "strongestSkills": ["Skill1", "Skill2"],
-    "skillGaps": ["Skill that should be improved"]
+    "projects": [
+        {{
+            "id": "p1",
+            "name": "Project Name",
+            "description": "What the project does",
+            "technologies": ["React", "Node.js"],
+            "role": "Lead Developer",
+            "impact": "Increased performance by 40%"
+        }}
+    ],
+    "achievements": [
+        {{
+            "id": "a1",
+            "title": "Achievement Title",
+            "description": "What was accomplished",
+            "metrics": "Quantifiable impact if available"
+        }}
+    ],
+    "certifications": [
+        {{
+            "id": "c1",
+            "name": "AWS Solutions Architect",
+            "issuer": "Amazon",
+            "year": "2023"
+        }}
+    ],
+    "experience": [
+        {{
+            "company": "Company Name",
+            "role": "Job Title",
+            "duration": "2 years",
+            "startDate": "2022",
+            "endDate": "2024",
+            "highlights": ["Key responsibility 1", "Key achievement 2"]
+        }}
+    ],
+    "education": [
+        {{
+            "degree": "BS Computer Science",
+            "institution": "University Name",
+            "year": "2020",
+            "gpa": "3.8"
+        }}
+    ],
+    "summary": "A comprehensive professional summary based on the resume",
+    "strongestSkills": ["Top skill 1", "Top skill 2", "Top skill 3"],
+    "skillGaps": ["Skills the candidate should develop"],
+    "totalYearsExperience": 5,
+    "seniorityLevel": "Mid-Senior"
 }}
 """
 
@@ -51,15 +109,45 @@ Respond in this exact JSON format:
             messages=[
                 {
                     "role": "system",
-                    "content": "You are an expert resume analyzer and career coach. Extract skills and create a detailed skill graph. Always respond with valid JSON.",
+                    "content": """You are an expert resume analyzer and career coach with deep knowledge of tech industry skills and roles.
+Your task is to extract comprehensive profile data from resumes.
+- Be thorough - extract EVERY skill, project, and achievement mentioned
+- Assess skill levels intelligently based on context, not just keywords
+- If experience years are mentioned, use them to inform skill levels
+- If certifications exist, boost related skill levels
+- Identify connections between related skills (e.g., React connects to JavaScript)
+- Always respond with valid JSON matching the exact structure requested.""",
                 },
                 {"role": "user", "content": prompt},
             ],
             response_format={"type": "json_object"},
-            temperature=0.7,
+            temperature=0.5,  # Lower temperature for more consistent extraction
+            max_tokens=4000,
         )
         
         result = json.loads(response.choices[0].message.content)
+        
+        # Ensure all required fields exist with defaults
+        result.setdefault("skills", [])
+        result.setdefault("projects", [])
+        result.setdefault("achievements", [])
+        result.setdefault("certifications", [])
+        result.setdefault("experience", [])
+        result.setdefault("education", [])
+        result.setdefault("summary", "")
+        result.setdefault("strongestSkills", [])
+        result.setdefault("skillGaps", [])
+        result.setdefault("totalYearsExperience", 0)
+        result.setdefault("seniorityLevel", "Entry")
+        
+        # Ensure each skill has required fields
+        for i, skill in enumerate(result["skills"]):
+            skill.setdefault("id", str(i + 1))
+            skill.setdefault("level", 50)
+            skill.setdefault("category", "Other")
+            skill.setdefault("connections", [])
+            skill.setdefault("yearsOfExperience", 0)
+        
         return result
     except Exception as e:
         print(f"OpenAI API error: {e}")
@@ -161,6 +249,223 @@ Respond in this exact JSON format:
     except Exception as e:
         print(f"OpenAI API error: {e}")
         raise Exception(f"Failed to generate roadmap: {str(e)}")
+
+
+async def generate_comprehensive_roadmap(
+    skills: list,
+    target_role: str,
+    missing_skills: list,
+    time_constraint: dict,
+    resume_text: str
+) -> dict:
+    """
+    Generate a comprehensive learning roadmap covering ALL subjects needed for the target role.
+    Considers user's existing skill levels and time constraints.
+    """
+    if not client:
+        raise Exception("OpenAI API key not configured. Please set OPENAI_API_KEY in environment variables.")
+    
+    weeks = int(time_constraint.get("weeks", 12))
+    hours_per_day = float(time_constraint.get("hoursPerDay", 2))
+    intensity = time_constraint.get("intensity", "moderate")
+    
+    # Calculate integer values for the prompt
+    total_hours = int(weeks * 7 * hours_per_day)
+    hours_per_week = int(7 * hours_per_day)
+    
+    # Limit skills to top 15 to avoid token overflow
+    limited_skills = skills[:500] if len(skills) > 20 else skills
+    
+    # Format skills with proficiency levels (concise format)
+    skills_with_levels = ", ".join([
+        f"{s.get('name')}:{s.get('proficiency', 50)}%"
+        for s in limited_skills
+    ])
+    
+    # Limit missing skills list
+    limited_missing = missing_skills[:10] if len(missing_skills) > 10 else missing_skills
+    
+    # Truncate resume text significantly
+    truncated_resume = resume_text[:2000] if resume_text else "No resume provided"
+    
+    prompt = f"""Create a learning roadmap for "{target_role}".
+
+User Skills: {skills_with_levels}
+Skills to Learn: {limited_missing}
+Duration: {weeks} weeks, {hours_per_day} hrs/day, Total: {total_hours} hours
+
+Cover: DSA, System Design (senior roles), Behavioral Prep, Coding Practice.
+Each week: 3-4 tasks with real LeetCode URLs.
+
+JSON format:
+{{
+    "overview": {{
+        "totalWeeks": {weeks},
+        "hoursPerDay": {hours_per_day},
+        "totalHours": {total_hours},
+        "subjects": [{{"id": "dsa", "name": "Data Structures & Algorithms", "weeks": 4, "priority": "high"}}],
+        "milestones": [{{"week": 4, "goal": "Complete DSA fundamentals"}}]
+    }},
+    "weeks": [
+        {{
+            "id": "w1",
+            "number": 1,
+            "title": "Week 1: Arrays & Hashing",
+            "description": "Master array manipulation",
+            "focus": "Data Structures",
+            "tasks": [
+                {{
+                    "id": "w1t1",
+                    "title": "Two Sum",
+                    "type": "problem",
+                    "duration": "30 min",
+                    "reason": "Classic hash map problem",
+                    "completed": false,
+                    "link": "https://leetcode.com/problems/two-sum/",
+                    "difficulty": "Easy"
+                }}
+            ]
+        }}
+    ],
+    "predictedReadyDate": "{weeks} weeks",
+    "targetRole": "{target_role}",
+    "totalTasks": 50,
+    "estimatedHoursPerWeek": {hours_per_week}
+}}
+
+IMPORTANT: 
+- Generate ALL {weeks} weeks with 3-5 tasks each
+- Use REAL LeetCode URLs (https://leetcode.com/problems/problem-name/)
+- Keep task descriptions concise
+- Focus on high-impact items
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model=settings.openai_model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": """You are an expert career coach. Create interview prep roadmaps with:
+1. REAL LeetCode URLs (https://leetcode.com/problems/problem-name/)
+2. Cover DSA, System Design, Behavioral prep
+3. Respect time constraints
+4. Keep responses concise but complete
+Always respond with valid JSON.""",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.7,
+            max_tokens=16000,
+        )
+        
+        content = response.choices[0].message.content
+        
+        # Check if response was truncated
+        if response.choices[0].finish_reason == "length":
+            print("Warning: OpenAI response was truncated due to length limit")
+        
+        try:
+            result = json.loads(content)
+        except json.JSONDecodeError as json_err:
+            print(f"JSON parse error: {json_err}")
+            print(f"Response content (first 500 chars): {content[:500] if content else 'Empty'}")
+            print(f"Response content (last 500 chars): {content[-500:] if content else 'Empty'}")
+            raise Exception(f"Failed to parse roadmap response: {str(json_err)}")
+        
+        # Ensure numeric values are integers (not floats)
+        if "estimatedHoursPerWeek" in result:
+            result["estimatedHoursPerWeek"] = int(result["estimatedHoursPerWeek"])
+        if "totalTasks" in result:
+            result["totalTasks"] = int(result["totalTasks"])
+        if "overview" in result:
+            if "totalHours" in result["overview"]:
+                result["overview"]["totalHours"] = int(result["overview"]["totalHours"])
+            if "totalWeeks" in result["overview"]:
+                result["overview"]["totalWeeks"] = int(result["overview"]["totalWeeks"])
+        
+        return result
+    except Exception as e:
+        print(f"OpenAI API error: {e}")
+        raise Exception(f"Failed to generate comprehensive roadmap: {str(e)}")
+
+
+async def match_roles_with_skill_levels(skills: list) -> list:
+    """
+    Match roles based on skills WITH proficiency levels for better recommendations.
+    """
+    if not client:
+        return get_mock_roles()
+    
+    # Format skills with levels
+    skills_formatted = "\n".join([
+        f"- {s.get('name')}: {s.get('proficiency', 50)}% proficiency ({s.get('category', 'General')})"
+        for s in skills
+    ])
+    
+    prompt = f"""Based on this candidate's skills WITH proficiency levels, recommend 5 suitable job roles.
+
+Candidate Skills:
+{skills_formatted}
+
+For each role, provide:
+- Match score (based on skills AND proficiency levels - be realistic)
+- Required skills (indicate if candidate has them and at what level)
+- Specific skill gaps to address
+- Estimated time to be interview-ready
+- Salary range
+- Demand level
+
+Consider:
+- High proficiency (80%+) skills as strong matches
+- Medium proficiency (50-79%) skills need some improvement
+- Low proficiency (<50%) skills are gaps
+
+Respond in this exact JSON format:
+{{
+    "roles": [
+        {{
+            "id": "1",
+            "title": "Senior Frontend Engineer",
+            "matchScore": 78,
+            "salary": "$150K - $200K",
+            "skills": [
+                {{"name": "JavaScript", "match": true, "candidateLevel": 85, "requiredLevel": 80}},
+                {{"name": "System Design", "match": false, "candidateLevel": 30, "requiredLevel": 70}}
+            ],
+            "gaps": ["System Design", "Testing"],
+            "demand": "High",
+            "timeToReady": "6-8 weeks",
+            "whyGoodFit": "Strong JavaScript and React skills match role requirements",
+            "focusAreas": ["Improve system design knowledge", "Learn testing best practices"]
+        }}
+    ]
+}}
+"""
+
+    try:
+        response = client.chat.completions.create(
+            model=settings.openai_model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": """You are an expert career advisor matching candidates to suitable roles.
+                    Consider both the skills AND their proficiency levels.
+                    Be realistic with match scores - high proficiency matters.
+                    Always respond with valid JSON.""",
+                },
+                {"role": "user", "content": prompt},
+            ],
+            response_format={"type": "json_object"},
+            temperature=0.7,
+        )
+        
+        result = json.loads(response.choices[0].message.content)
+        return result.get("roles", [])
+    except Exception as e:
+        print(f"OpenAI API error: {e}")
+        return get_mock_roles()
 
 
 async def generate_bonus_topics(week_focus: str, target_role: str) -> dict:
