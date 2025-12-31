@@ -127,8 +127,6 @@ async def save_roadmap(user_id: str, roadmap_data: dict, target_role: str) -> di
     """
     Save a user's roadmap to Supabase.
     """
-    print(f"[DEBUG] save_roadmap called with user_id={user_id}, target_role={target_role}")
-    
     if not supabase:
         raise Exception("Supabase not configured")
     
@@ -136,8 +134,6 @@ async def save_roadmap(user_id: str, roadmap_data: dict, target_role: str) -> di
         # Calculate total tasks
         weeks = roadmap_data.get("weeks", [])
         total_tasks = sum(len(w.get("tasks", [])) for w in weeks)
-        
-        print(f"[DEBUG] Weeks count: {len(weeks)}, Total tasks: {total_tasks}")
         
         # Get estimated hours - ensure it's an integer
         estimated_hours = roadmap_data.get("estimatedHoursPerWeek", 10)
@@ -154,33 +150,20 @@ async def save_roadmap(user_id: str, roadmap_data: dict, target_role: str) -> di
             "task_completion_times": json.dumps(roadmap_data.get("taskCompletionTimes", {})),
         }
         
-        print(f"[DEBUG] Attempting to save roadmap record...")
+        # Check if record exists first
+        existing = supabase.table("roadmaps").select("id").eq("user_id", user_id).execute()
         
-        # First, try simple insert without upsert to avoid constraint issues
-        try:
-            # Check if record exists first
-            existing = supabase.table("roadmaps").select("id").eq("user_id", user_id).execute()
-            print(f"[DEBUG] Existing roadmaps for user: {len(existing.data) if existing.data else 0}")
-            
-            if existing.data and len(existing.data) > 0:
-                # Update existing
-                result = supabase.table("roadmaps").update(record).eq("user_id", user_id).execute()
-                print(f"[DEBUG] Update result: {result.data}")
-            else:
-                # Insert new
-                result = supabase.table("roadmaps").insert(record).execute()
-                print(f"[DEBUG] Insert result: {result.data}")
-            
-            if result.data:
-                print(f"[DEBUG] Roadmap saved successfully!")
-                return {"success": True, "data": result.data[0]}
-            else:
-                print(f"[DEBUG] No data returned from save operation")
-                return {"success": False, "error": "No data returned"}
-                
-        except Exception as db_error:
-            print(f"[DEBUG] Database error: {db_error}")
-            raise db_error
+        if existing.data and len(existing.data) > 0:
+            # Update existing
+            result = supabase.table("roadmaps").update(record).eq("user_id", user_id).execute()
+        else:
+            # Insert new
+            result = supabase.table("roadmaps").insert(record).execute()
+        
+        if result.data:
+            return {"success": True, "data": result.data[0]}
+        else:
+            return {"success": False, "error": "No data returned"}
         
     except Exception as e:
         print(f"Supabase error saving roadmap: {e}")
@@ -191,19 +174,14 @@ async def get_roadmap(user_id: str) -> Optional[dict]:
     """
     Get a user's roadmap from Supabase.
     """
-    print(f"[DEBUG] get_roadmap called with user_id={user_id}")
-    
     if not supabase:
         raise Exception("Supabase not configured")
     
     try:
         result = supabase.table("roadmaps").select("*").eq("user_id", user_id).order("created_at", desc=True).limit(1).execute()
         
-        print(f"[DEBUG] Query result: {len(result.data) if result.data else 0} records found")
-        
         if result.data and len(result.data) > 0:
             roadmap = result.data[0]
-            print(f"[DEBUG] Found roadmap id={roadmap.get('id')}, target_role={roadmap.get('target_role')}")
             result_dict = {
                 "id": roadmap.get("id"),
                 "userId": roadmap.get("user_id"),
@@ -219,7 +197,6 @@ async def get_roadmap(user_id: str) -> Optional[dict]:
             if roadmap.get("overview"):
                 result_dict["overview"] = json.loads(roadmap.get("overview"))
             return result_dict
-        print(f"[DEBUG] No roadmap found for user_id={user_id}")
         return None
         
     except Exception as e:
@@ -479,17 +456,28 @@ async def get_completed_problems(user_id: str) -> list:
         raise e
 
 
-async def calculate_job_readiness(user_id: str, target_role: str) -> dict:
+async def calculate_job_readiness(
+    user_id: str, 
+    target_role: str,
+    profile: dict = None,
+    roadmap: dict = None,
+    progress: dict = None
+) -> dict:
     """
     Calculate job readiness forecast based on actual progress.
+    Accepts pre-fetched data to avoid redundant DB queries.
     """
     if not supabase:
         raise Exception("Supabase not configured")
     
     try:
-        profile = await get_profile(user_id)
-        roadmap = await get_roadmap(user_id)
-        progress = await get_user_progress(user_id)
+        # Use provided data or fetch if not provided
+        if profile is None:
+            profile = await get_profile(user_id)
+        if roadmap is None:
+            roadmap = await get_roadmap(user_id)
+        if progress is None:
+            progress = await get_user_progress(user_id)
         
         # Calculate skill match factor (0-25 points)
         total_skills = len(profile.get("skills", [])) if profile else 0

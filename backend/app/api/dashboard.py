@@ -27,14 +27,22 @@ async def get_dashboard(user_id: str):
     """
     Get dashboard data for a user with real streak and progress data.
     """
-    # Get from Supabase
+    # Get from Supabase (fetch once and reuse)
     profile = await get_supabase_profile(user_id) or {}
     roadmap = await get_supabase_roadmap(user_id) or {}
     
     # Get real progress data
     progress = await get_user_progress(user_id)
     streak_data = await calculate_streak(user_id)
-    job_readiness = await calculate_job_readiness(user_id, roadmap.get("targetRole", "Software Engineer"))
+    
+    # Pass pre-fetched data to avoid redundant DB queries
+    job_readiness = await calculate_job_readiness(
+        user_id, 
+        roadmap.get("targetRole", "Software Engineer"),
+        profile=profile,
+        roadmap=roadmap,
+        progress=progress
+    )
     
     # Calculate task stats from roadmap
     all_tasks = []
