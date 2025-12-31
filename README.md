@@ -1,294 +1,177 @@
-# 🚀 SkillSurge - AI Career Co-Pilot
+# SkillSurge - AI Career Co-Pilot
 
-> **Transform job interview prep from chaos to clarity with 13 autonomous AI agents**
+An intelligent career development platform that analyzes your skills, recommends optimal career paths, and creates personalized learning roadmaps to help you land your dream job.
 
-[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](https://react.dev/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
-[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o-412991?logo=openai)](https://openai.com/)
-[![Tavus](https://img.shields.io/badge/Tavus-CVI-FF6B6B)](https://tavus.io/)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase)](https://supabase.com/)
+## 🎯 Project Overview
 
----
+SkillSurge is an AI-powered platform designed to bridge the gap between your current skills and your target role. Using advanced resume analysis, skill assessment, and intelligent roadmap generation, it provides a comprehensive preparation strategy tailored to your career goals.
 
-## 📋 Table of Contents
+### Problem Statement
+Job seekers struggle to:
+- Accurately assess their current skill levels
+- Identify critical skill gaps for their target roles
+- Create structured, personalized learning plans
+- Stay motivated with measurable progress tracking
+- Practice with realistic, role-specific problems
 
-- [Overview](#-overview)
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Architecture](#-architecture)
-- [13 AI Agents](#-13-ai-agents)
-- [Project Structure](#-project-structure)
-- [Getting Started](#-getting-started)
-- [API Endpoints](#-api-endpoints)
-- [Environment Variables](#-environment-variables)
+SkillSurge solves all of these challenges with an intelligent, AI-driven approach.
 
----
+## ✨ Key Features
 
-## 🎯 Overview
+### 1. **Smart Resume Analysis**
+- Upload your resume (PDF, DOC, TXT)
+- AI automatically extracts skills, experience, projects, and achievements
+- Intelligent skill categorization (Languages, AI/ML, Frontend, Backend, Database, etc.)
+- Proficiency level assessment based on context
 
-**SkillSurge** is an AI-powered career co-pilot that guides candidates from resume upload to job-ready in 8-12 weeks. Unlike scattered tools (LeetCode + YouTube + LinkedIn), SkillSurge provides:
+### 2. **Intelligent Role Recommendations**
+- Analyzes your skill profile against job market data
+- Recommends roles with match percentages
+- Shows required vs. missing skills for each role
+- Displays salary ranges for transparency
 
-- **Unified platform** with 13 collaborative AI agents
-- **Closed-loop feedback** - Rejection → Analysis → Replanning → Success
-- **Active assignment** - "Today: Two Sum. Why: 95% Google interview frequency"
-- **Predictable timeline** - "You'll be ready in 10 weeks" (85% accurate)
-- **Live AI interviews** - Practice with video AI interviewer
+### 3. **Personalized Roadmaps**
+- Subject-wise breakdown of learning areas
+- Core subjects tailored to your target role
+- Week-by-week learning plan with estimated hours
+- Priority-based subject ordering (High/Medium/Low)
 
-### Results
-| Metric | Before | After |
-|--------|--------|-------|
-| Skill Match | 35% | 75% |
-| Interview Rate | 10% | 23% |
-| Time Saved/Week | 0 hrs | 12 hrs |
-| Prep Timeline | 12-16 weeks | 8-10 weeks |
+### 4. **Structured Learning Paths**
+Each subject includes:
+- **Weekly breakdown** with specific focus areas
+- **Task-based structure** (videos, readings, coding problems, projects)
+- **Progress tracking** with completion percentages
+- **Difficulty levels** (Easy, Medium, Hard) for realistic preparation
+- **Resource links** to curated learning materials
 
----
+### 5. **Daily Practice System**
+- Daily coding problems matched to your learning path
+- Difficulty progression from fundamentals to advanced
+- Company-specific problem frequencies
+- Streak tracking for consistency motivation
 
-## ✨ Features
+### 6. **Dashboard Analytics**
+- Real-time skill match percentage
+- Streak tracking for daily consistency
+- Problems solved counter
+- Job-readiness prediction based on progress
+- Skill improvement visualization over weeks
 
-### Core Features
-- 📄 **Smart Resume Parser** - AI extracts skills, experience, projects
-- 🎯 **Role Matching** - Match % against target roles with gap analysis
-- 🗺️ **Dynamic Roadmap** - Personalized 8-12 week plan
-- 📊 **Skill Graph Visualization** - Interactive skill relationships
-- 📝 **Daily Problem Assignment** - Company-specific, frequency-based
-- 🎬 **Live AI Video Interviews** - Real-time mock interviews with Tavus
-- 📈 **Progress Dashboard** - Streaks, forecasts, milestones
-- 🔄 **Feedback Loop** - Rejection analysis → Roadmap updates
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-
-| Technology | Purpose |
-|------------|---------|
-| **React 18 + Vite** | Fast SPA development |
-| **TypeScript** | Type safety |
-| **Tailwind CSS** | Utility-first styling |
-| **shadcn/ui** | Beautiful UI components |
-| **React Router v6** | Client-side routing |
-| **TanStack Query** | Data fetching & caching |
-| **React Flow** | Skill graph visualization |
-| **Recharts** | Dashboard charts |
-| **Framer Motion** | Animations |
-
-### Backend
-
-| Technology | Purpose |
-|------------|---------|
-| **Python 3.11+** | Runtime |
-| **FastAPI** | Async API framework |
-| **LangChain** | AI agent orchestration |
-| **Pydantic** | Data validation |
-| **PyPDF2** | Resume parsing |
-| **BackgroundTasks** | Async job processing |
-
-### Database
-
-| Technology | Purpose |
-|------------|---------|
-| **Supabase PostgreSQL** | Primary database |
-| **Supabase Auth** | Authentication |
-| **Supabase Storage** | File storage (resumes) |
-| **pgvector** | Vector search (skill matching) |
-
-### AI Services
-
-| Service | Purpose |
-|---------|---------|
-| **OpenAI GPT-4o** | LLM for all 13 agents |
-| **Tavus CVI** | Video mock interviews |
-
-### External APIs
-
-| API | Purpose |
-|-----|---------|
-| **Google Calendar API** | Reminder scheduling |
-| **Mock Data (JSON)** | Jobs, problems, courses, mentors |
-
-### Infrastructure
-
-| Technology | Purpose |
-|------------|---------|
-| **Vercel** | Frontend hosting |
-| **Railway / Render** | Backend hosting |
-
----
+### 7. **Interview Preparation**
+- Mock interview simulator with AI evaluation
+- Behavioral question practice
+- Technical problem solving
+- Interview feedback and improvement areas
 
 ## 🏗️ Architecture
 
+### Tech Stack
+
+**Frontend:**
+- React 18 with TypeScript
+- Vite for lightning-fast builds
+- TailwindCSS for responsive design
+- Framer Motion for smooth animations
+- Recharts for analytics visualization
+- Lucide Icons for UI components
+
+**Backend:**
+- FastAPI (Python 3.12)
+- Supabase PostgreSQL for data persistence
+- OpenAI GPT-4o-mini for AI analysis
+- Python-DOCX and PyPDF2 for resume parsing
+
+**AI/ML:**
+- OpenAI API for skill extraction and analysis
+- Intelligent prompt engineering for role recommendations
+- LangChain for RAG-based knowledge retrieval
+
+### System Architecture
+
 ```
-┌──────────────────────────────────────────────────────────┐
-│                    React + Vite Frontend                 │
-│  ┌─────────┬─────────┬───────────┬──────────┬─────────┐  │
-│  │Dashboard│ Roadmap │ Interview │SkillGraph│ Profile │  │
-│  └─────────┴─────────┴───────────┴──────────┴─────────┘  │
-└──────────────────────────────────────────────────────────┘
-                           │ REST API
-                           ▼
-┌──────────────────────────────────────────────────────────┐
-│                    FastAPI Backend                       │
-│  ┌─────────────────────────────────────────────────────┐ │
-│  │              13 AI Agents (LangChain)               │ │
-│  │  Profile │ Role │ Roadmap │ Questions │ Interview  │ │
-│  │  Opportunity │ Tailor │ Feedback │ Forecast │ ...  │ │
-│  └─────────────────────────────────────────────────────┘ │
-└──────────────────────────────────────────────────────────┘
-         │              │                    │
-         ▼              ▼                    ▼
-    ┌─────────┐   ┌──────────┐         ┌─────────┐
-    │Supabase │   │ OpenAI   │         │  Tavus  │
-    │PostgreSQL│   │  GPT-4o  │         │   CVI   │
-    │pgvector │   │          │         │         │
-    │  Auth   │   │          │         │         │
-    │ Storage │   │          │         │         │
-    └─────────┘   └──────────┘         └─────────┘
+┌─────────────────────────────────────────────────────────┐
+│                   React Frontend                        │
+│  (Vite + TypeScript + TailwindCSS + Framer Motion)     │
+└────────────────────┬────────────────────────────────────┘
+                     │
+        ┌────────────┴────────────┐
+        │                         │
+    ┌───▼──────┐          ┌──────▼────────┐
+    │ FastAPI  │          │  Supabase     │
+    │ Backend  │◄────────►│  PostgreSQL   │
+    └───┬──────┘          └──────┬────────┘
+        │                        │
+        │         ┌──────────────┘
+        │         │
+    ┌───▼─────────▼──┐
+    │   OpenAI API   │
+    │  (GPT-4o-mini) │
+    └────────────────┘
 ```
-
----
-
-## 🤖 13 AI Agents
-
-### Intake Phase
-| # | Agent | Purpose | Output |
-|---|-------|---------|--------|
-| 1 | **Profile Agent** | Parse resume → Extract skills | Career Knowledge Graph |
-
-### Planning Phase
-| # | Agent | Purpose | Output |
-|---|-------|---------|--------|
-| 2 | **Role Market Agent** | Analyze jobs → Recommend roles | 3-5 target roles + gaps |
-| 3 | **Roadmap Agent** | Generate personalized plan | Week-by-week schedule |
-
-### Action Phase
-| # | Agent | Purpose | Output |
-|---|-------|---------|--------|
-| 4 | **Opportunity Hunter** | Find matching jobs | 5-7 new jobs/week |
-| 5 | **Application Tailor** | Customize resume per job | Tailored resume |
-| 12 | **Question Bank** | Assign daily problems | "Today: Two Sum, 95% freq" |
-| 13 | **Mock Interview** | AI video interview practice | Score + feedback report |
-
-### Feedback & Learning Loop
-| # | Agent | Purpose | Output |
-|---|-------|---------|--------|
-| 6 | **Feedback Adapter** | Analyze rejections → Replan | Updated roadmap |
-| 7 | **Competitive Intel** | Benchmark against others | Percentile ranking |
-| 8 | **Skill Forecasting** | Predict job-ready date | "Ready in 10 weeks" |
-| 9 | **Learning Recommender** | Match courses to style | Top 3 courses ranked |
-| 10 | **Network Mentor** | Find mentors + outreach | 10 mentor matches |
-| 11 | **Motivation Agent** | Detect burnout → Encourage | Intervention messages |
-
----
 
 ## 📁 Project Structure
 
 ```
 SkillSurge/
-├── frontend/                       # React + Vite
+├── frontend/
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── ui/                 # shadcn components
-│   │   │   ├── SkillGraph.tsx      # Interactive skill visualization
-│   │   │   ├── Roadmap.tsx         # Timeline component
-│   │   │   ├── Dashboard.tsx       # Main dashboard
-│   │   │   ├── Interview.tsx       # Tavus embed
-│   │   │   └── DailyTask.tsx       # Today's assignment
 │   │   ├── pages/
-│   │   │   ├── Home.tsx
-│   │   │   ├── Onboarding.tsx
-│   │   │   ├── Dashboard.tsx
-│   │   │   ├── Roadmap.tsx
-│   │   │   ├── Interview.tsx
-│   │   │   └── Profile.tsx
-│   │   ├── services/
-│   │   │   └── api.ts              # API client
+│   │   │   ├── Onboarding.tsx          # 5-step onboarding flow
+│   │   │   ├── Dashboard.tsx            # Main dashboard with daily problem
+│   │   │   ├── SubjectOverview.tsx      # All subjects overview
+│   │   │   ├── SubjectDetail.tsx        # Individual subject roadmap
+│   │   │   ├── Interview.tsx            # Mock interview simulator
+│   │   │   └── Auth pages               # Login, signup, password reset
+│   │   ├── components/
+│   │   │   ├── ResumeUpload.tsx         # Resume file upload
+│   │   │   ├── SkillProficiency.tsx     # Skill rating interface
+│   │   │   ├── RoleMatch.tsx            # Role selection cards
+│   │   │   ├── DailyProblemCard.tsx     # Daily coding problem
+│   │   │   ├── SkillGraph.tsx           # Skill visualization
+│   │   │   └── Layout.tsx               # Navigation layout
 │   │   ├── context/
-│   │   │   └── AuthContext.tsx     # Auth state
-│   │   ├── hooks/
-│   │   ├── utils/
-│   │   ├── App.tsx
-│   │   └── main.tsx
+│   │   │   ├── AuthContext.tsx          # Authentication state
+│   │   │   └── AppContext.tsx           # Global app state
+│   │   ├── services/
+│   │   │   └── api.ts                   # API client
+│   │   └── data/
+│   │       └── mockDemoData.ts          # Complete demo data
 │   ├── package.json
-│   ├── vite.config.ts
-│   ├── tailwind.config.js
-│   └── tsconfig.json
+│   └── vite.config.ts
 │
 ├── backend/
 │   ├── app/
 │   │   ├── api/
-│   │   │   ├── __init__.py
-│   │   │   ├── profile.py          # Profile endpoints
-│   │   │   ├── roadmap.py          # Roadmap endpoints
-│   │   │   ├── interview.py        # Interview endpoints
-│   │   │   ├── dashboard.py        # Dashboard endpoints
-│   │   │   └── auth.py             # Auth endpoints
-│   │   ├── agents/                 # 13 AI Agents
-│   │   │   ├── __init__.py
-│   │   │   ├── profile_agent.py
-│   │   │   ├── role_market_agent.py
-│   │   │   ├── roadmap_agent.py
-│   │   │   ├── opportunity_agent.py
-│   │   │   ├── tailor_agent.py
-│   │   │   ├── feedback_agent.py
-│   │   │   ├── competitive_agent.py
-│   │   │   ├── forecast_agent.py
-│   │   │   ├── learning_agent.py
-│   │   │   ├── mentor_agent.py
-│   │   │   ├── motivation_agent.py
-│   │   │   ├── question_agent.py
-│   │   │   └── interview_agent.py
+│   │   │   ├── auth.py                  # Authentication endpoints
+│   │   │   ├── profile.py               # Profile management
+│   │   │   ├── roles.py                 # Role recommendations
+│   │   │   ├── roadmap.py               # Roadmap generation
+│   │   │   ├── dashboard.py             # Dashboard data
+│   │   │   └── interview.py             # Interview endpoints
 │   │   ├── services/
-│   │   │   ├── __init__.py
-│   │   │   ├── openai_service.py   # OpenAI GPT-4o
-│   │   │   ├── tavus_service.py    # Tavus CVI
-│   │   │   └── supabase_service.py # Database
-│   │   ├── models/
-│   │   │   ├── __init__.py
-│   │   │   ├── user.py
-│   │   │   ├── profile.py
-│   │   │   ├── roadmap.py
-│   │   │   └── interview.py
-│   │   ├── schemas/
-│   │   │   ├── __init__.py
-│   │   │   └── requests.py
-│   │   ├── data/                   # Mock data
-│   │   │   ├── jobs.json
-│   │   │   ├── problems.json
-│   │   │   ├── courses.json
-│   │   │   └── mentors.json
-│   │   ├── config.py               # Configuration
-│   │   └── main.py                 # FastAPI app
+│   │   │   ├── resume_parser.py         # Resume parsing logic
+│   │   │   ├── supabase_service.py      # Database operations
+│   │   │   ├── openai_service.py        # OpenAI integration
+│   │   │   └── roadmap_generator.py     # Roadmap AI generation
+│   │   └── models.py                    # Data models
+│   ├── main.py                          # FastAPI app entry
 │   ├── requirements.txt
-│   └── .env.example
+│   └── venv/                            # Virtual environment
 │
-├── .env
-├── .gitignore
-├── SkillSurge-Executive-Summary.md
-└── README.md
+├── README.md (this file)
+└── .git/
 ```
-
----
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-
 - Node.js 18+
-- Python 3.11+
+- Python 3.12+
 - Supabase account
 - OpenAI API key
-- Tavus API key
+- Git
 
-### 1. Clone Repository
-
-```bash
-git clone https://github.com/yourusername/SkillSurge.git
-cd SkillSurge
-```
-
-### 2. Frontend Setup
+### Frontend Setup
 
 ```bash
 cd frontend
@@ -296,110 +179,260 @@ npm install
 npm run dev
 ```
 
-### 3. Backend Setup
+The frontend will start at `http://localhost:5173` (or 5174 if port is busy)
+
+### Backend Setup
 
 ```bash
 cd backend
 python -m venv venv
 venv\Scripts\activate  # Windows
-# source venv/bin/activate  # Mac/Linux
+source venv/bin/activate  # macOS/Linux
+
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+python main.py
 ```
 
-### 4. Environment Variables
+The backend will start at `http://localhost:8000`
 
-Create `.env` file in root:
+### Environment Variables
 
-```env
-# Supabase
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_KEY=your_service_key
+**Frontend (.env):**
+```
+VITE_API_URL=http://localhost:8000
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_key
+```
 
-# OpenAI
+**Backend (.env):**
+```
+DATABASE_URL=postgresql://user:password@localhost/skillsurge
 OPENAI_API_KEY=your_openai_key
-
-# Tavus
-TAVUS_API_KEY=your_tavus_key
-
-# App
-FRONTEND_URL=http://localhost:5173
-BACKEND_URL=http://localhost:8000
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_key
 ```
 
----
+## 📊 Data Flow
 
-## 📡 API Endpoints
+### Onboarding Journey
 
-### Profile
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/profile/upload` | Upload resume |
-| GET | `/api/profile/{id}` | Get profile |
-| GET | `/api/profile/{id}/skills` | Get skill graph |
+1. **Resume Upload** → User uploads resume (PDF/DOC/TXT)
+2. **Skill Extraction** → AI analyzes resume and extracts skills with proficiency levels
+3. **Skill Review** → User reviews/adjusts extracted skills and proficiency ratings
+4. **Role Selection** → AI recommends matching roles based on skills
+5. **Timeline Setting** → User selects preparation duration and daily hours
+6. **Roadmap Generation** → AI creates personalized learning roadmap
 
-### Roadmap
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/roadmap/generate` | Generate roadmap |
-| GET | `/api/roadmap/{id}` | Get roadmap |
-| PUT | `/api/roadmap/{id}` | Update roadmap |
+### Learning Experience
 
-### Interview
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/interview/start` | Start mock interview |
-| GET | `/api/interview/{id}` | Get interview details |
-| GET | `/api/interview/{id}/feedback` | Get feedback |
+```
+User Profile (Skills + Target Role)
+        ↓
+Role Analysis (Required Skills, Gaps)
+        ↓
+Subject Selection (4-6 core subjects)
+        ↓
+Weekly Breakdown (6-12 weeks)
+        ↓
+Daily Tasks (Videos, Readings, Problems, Projects)
+        ↓
+Progress Tracking (Completion %, Skill Improvement)
+        ↓
+Job Readiness Score & Timeline
+```
 
-### Dashboard
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/dashboard/{user_id}` | Get dashboard data |
-| GET | `/api/dashboard/{user_id}/daily` | Get daily task |
-| GET | `/api/dashboard/{user_id}/progress` | Get progress stats |
+## 🧠 AI Integration
 
----
+### Resume Analysis
+- Extracts skills with context understanding
+- Identifies experience level for each skill
+- Recognizes projects and achievements
+- Detects certifications and education
 
-## 🔑 Environment Variables
+### Role Recommendations
+- Matches user skills against job requirements
+- Calculates match percentages
+- Identifies skill gaps
+- Suggests learning priorities
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `SUPABASE_URL` | Supabase project URL | ✅ |
-| `SUPABASE_ANON_KEY` | Supabase anon/public key | ✅ |
-| `SUPABASE_SERVICE_KEY` | Supabase service role key | ✅ |
-| `OPENAI_API_KEY` | OpenAI API key | ✅ |
-| `TAVUS_API_KEY` | Tavus API key | ✅ |
-| `FRONTEND_URL` | Frontend URL | ✅ |
-| `BACKEND_URL` | Backend URL | ✅ |
+### Roadmap Generation
+- Creates personalized learning plans
+- Assigns appropriate difficulty progression
+- Curates relevant resources
+- Optimizes timeline based on available hours
 
----
+### Daily Problem Selection
+- Matches problems to current learning focus
+- Progressively increases difficulty
+- Considers company-specific frequencies
+- Tracks solved problems
 
-## 💰 Cost Estimate
+## 📈 Key Metrics
 
-| Service | Monthly Cost |
-|---------|--------------|
-| Vercel | Free |
-| Supabase | Free tier |
-| OpenAI GPT-4o | ~$10-20 |
-| Tavus CVI | ~$10-20 |
-| **Total** | **~$20-40** |
+The platform tracks:
+- **Skill Match %**: Current alignment with target role
+- **Day Streak**: Consecutive days of practice
+- **Problems Solved**: Total coding problems completed
+- **Weeks Until Ready**: Estimated time to job readiness
+- **Subject Progress**: Completion % for each subject
+- **Weekly Improvement**: Skill growth visualization
 
----
+## 🔐 Security
+
+- Supabase authentication with email/password
+- JWT token-based API authentication
+- HTTPS only in production
+- User data encryption in database
+- Secure API endpoints with middleware validation
+
+## 🎓 Learning Subjects
+
+The platform covers 4-6 core subjects depending on target role:
+
+### Common Subjects
+- **Data Structures & Algorithms** (6 weeks) - Foundation for technical interviews
+- **System Design** (4 weeks) - Architecture and scalability
+- **AI/ML Fundamentals** (4 weeks) - Core concepts for AI roles
+- **Behavioral** (2 weeks) - STAR method and company fit
+
+### Role-Specific Subjects
+- Full Stack Development, DevOps, NLP, Computer Vision, etc.
+
+Each subject contains:
+- 3-5 weeks of structured content
+- 15-30 daily tasks
+- Videos, reading materials, coding problems
+- Real-world projects for hands-on learning
+
+## 🎯 Target Users
+
+- **Job Seekers**: Preparing for career transitions
+- **Recent Graduates**: Entering the tech industry
+- **Career Changers**: Moving to AI/ML or specialized roles
+- **Interview Preparation**: Candidates in active job search
+- **Skill Development**: Professionals upgrading their expertise
+
+## 📚 Technology Details
+
+### Resume Parsing
+- Multi-method extraction: PyPDF2, pdfplumber, pdfminer, PyMuPDF
+- Fallback mechanisms for edge cases
+- Intelligent section detection (Skills, Experience, Education, Projects)
+- Regex-based pattern matching for skill extraction
+
+### Database Schema
+- **users** - User accounts and authentication
+- **profiles** - User skill profiles and resume data
+- **roles** - Target role information and requirements
+- **roadmaps** - Generated learning roadmaps
+- **subjects** - Learning subjects and content
+- **user_progress** - Tracking user progress
+- **daily_problems** - Daily coding problem pool
+- **user_solutions** - User problem submissions and solutions
+
+### API Endpoints
+
+**Auth**
+- `POST /api/auth/register` - Create account
+- `POST /api/auth/login` - Login
+- `GET /api/auth/me` - Current user
+
+**Profile**
+- `POST /api/profile` - Create profile
+- `GET /api/profile/{id}` - Get profile
+- `POST /api/profile/analyze-resume` - Resume analysis
+
+**Roadmap**
+- `POST /api/roadmap/generate` - Generate roadmap
+- `GET /api/roadmap/{id}` - Get roadmap details
+- `GET /api/roadmap/{id}/subjects` - Subject-wise breakdown
+
+**Dashboard**
+- `GET /api/dashboard/{user_id}` - Dashboard data
+- `GET /api/dashboard/{user_id}/daily` - Daily problem
+- `POST /api/dashboard/{user_id}/complete` - Mark problem complete
+
+## 🧪 Testing
+
+Run frontend tests:
+```bash
+cd frontend
+npm run test
+```
+
+Run backend tests:
+```bash
+cd backend
+pytest
+```
+
+## 📝 Development Workflow
+
+1. Create feature branch: `git checkout -b feature/feature-name`
+2. Make changes and commit: `git commit -m "feat: description"`
+3. Push to remote: `git push origin feature/feature-name`
+4. Create pull request on GitHub
+
+## 🚢 Deployment
+
+### Frontend (Vercel)
+```bash
+npm run build
+vercel deploy
+```
+
+### Backend (Railway/Render)
+```bash
+git push origin main
+# Auto-deploys from GitHub
+```
+
+## 🐛 Known Limitations
+
+- Resume parsing works best with standard formats
+- AI analysis depends on OpenAI API availability
+- Real-time collaboration features not yet implemented
+- Mobile app not yet available
+
+## 🔮 Future Features
+
+- [ ] Mobile app (React Native)
+- [ ] Real-time collaboration on learning plans
+- [ ] Peer comparison and community features
+- [ ] Video tutorials integrated in platform
+- [ ] Company-specific preparation paths
+- [ ] Mentor matching system
+- [ ] Job opportunity recommendations
+- [ ] Interview recordings and playback
+
+## 📞 Support
+
+For issues, questions, or feature requests:
+1. Check existing GitHub issues
+2. Create a new issue with detailed description
+3. Contact support: support@skillsurge.ai
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) for details.
+This project is licensed under the MIT License - see LICENSE file for details.
+
+## 👥 Author
+
+**Mathana Guru Sabareesan S**
+- AI/ML Engineer
+- Full-stack developer
+- Hackathon finalist (7th place at IIT Kharagpur Data Science Hackathon)
+
+## 🙏 Acknowledgments
+
+- OpenAI for GPT-4o-mini API
+- Supabase for database infrastructure
+- React and Vite communities
+- FastAPI framework
+- All contributors and testers
 
 ---
 
-## 👥 Team
+**SkillSurge** - Your AI Career Co-Pilot 🚀
 
-Built with ❤️ for the hackathon.
-
----
-
-<p align="center">
-  <strong>SkillSurge</strong> - From Confused to Job-Ready in 10 Weeks
-</p>
+*Last Updated: December 2025*
