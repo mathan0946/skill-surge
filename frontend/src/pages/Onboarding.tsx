@@ -1,19 +1,28 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ResumeUpload } from '../components/ResumeUpload';
-import { SkillProficiency } from '../components/SkillProficiency';
-import { RoleMatch } from '../components/RoleMatch';
-import { TimeConstraint, TimeConstraint as TimeConstraintType } from '../components/TimeConstraint';
 import { Button } from '../components/ui/Button';
 import { useApp } from '../context/AppContext';
 import { useAuth } from '../context/AuthContext';
-import { profileApi, rolesApi, roadmapApi } from '../services/api';
-import { ArrowRight, ArrowLeft, Check, Upload, Star, Target, Clock, Sparkles, Loader2 } from 'lucide-react';
+import { DEMO_PROFILE, DEMO_ROLES } from '../data/mockDemoData';
+import { 
+  ArrowRight, 
+  ArrowLeft, 
+  Check, 
+  Upload, 
+  Star, 
+  Target, 
+  Clock, 
+  Sparkles, 
+  Loader2,
+  FileText,
+  ChevronUp,
+  ChevronDown,
+} from 'lucide-react';
 
 const steps = [
   { id: 1, title: 'Upload Resume', description: 'Let AI analyze your skills', icon: Upload },
-  { id: 2, title: 'Rate Skills', description: 'Confirm your proficiency', icon: Star },
+  { id: 2, title: 'Your Skills', description: 'Extracted from resume', icon: Star },
   { id: 3, title: 'Select Role', description: 'Choose your target role', icon: Target },
   { id: 4, title: 'Timeline', description: 'Set your preparation time', icon: Clock },
   { id: 5, title: 'Generate Plan', description: 'Create your roadmap', icon: Sparkles },
@@ -24,7 +33,6 @@ interface Skill {
   name: string;
   level: number;
   category: string;
-  connections?: string[];
 }
 
 interface Role {
@@ -34,240 +42,73 @@ interface Role {
   requiredSkills: string[];
   missingSkills: string[];
   salary?: string;
-  subjects?: string[];
 }
 
 export function Onboarding() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  useAuth(); // For auth context
   const { setProfile, setSelectedRole } = useApp();
   const [currentStep, setCurrentStep] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [skills, setSkills] = useState<Skill[]>([]);
-  const [ratedSkills, setRatedSkills] = useState<Skill[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
   const [selectedRoleData, setSelectedRoleData] = useState<Role | null>(null);
-  const [timeConstraint, setTimeConstraint] = useState<TimeConstraintType | null>(null);
-  const [resumeText, setResumeText] = useState<string>('');
-  const [generatingRoadmap, setGeneratingRoadmap] = useState(false);
-  const [profileData, setProfileData] = useState<any>(null);
+  const [selectedWeeks, setSelectedWeeks] = useState(12);
+  const [hoursPerDay, setHoursPerDay] = useState(3);
+  const [generatingProgress, setGeneratingProgress] = useState(0);
 
-  const handleResumeUpload = async (text: string) => {
-    setIsLoading(true);
-    setResumeText(text); // Store full resume text
+  // Simulate resume processing with demo data
+  const handleResumeUpload = () => {
+    setIsProcessing(true);
     
-    try {
-      // Send complete resume text to OpenAI for analysis
-      const response = await profileApi.analyzeText(text);
-      const profile = response.data?.profile || response.profile || response.data || response;
-      const skillData = response.data?.data || response.data || profile;
-      
-      // Build skill graph from response - use the full skill data from OpenAI
-      const skillGraph: Skill[] = (skillData.skills || skillData.skillGraph || []).map((s: any, index: number) => ({
-        id: s.id || String(index + 1),
-        name: typeof s === 'string' ? s : s.name,
-        level: s.level || 50, // Use AI-determined level
-        category: s.category || 'Other',
-        connections: s.connections || [],
-      }));
-      
-      setSkills(skillGraph);
-      setRatedSkills(skillGraph);
-      
-      // Build comprehensive profile with all extracted data
-      const profileInfo = {
-        id: profile.id || 'demo-profile',
-        userId: profile.userId,
-        skills: skillGraph,
-        skillGraph: skillGraph,
-        experience: skillData.experience || profile.experience || [],
-        education: skillData.education || profile.education || [],
-        summary: skillData.summary || profile.summary || '',
-        strongestSkills: skillData.strongestSkills || profile.strongestSkills || [],
-        skillGaps: skillData.skillGaps || profile.skillGaps || [],
-        resumeText: text, // Store for roadmap generation
-        // Extended profile data from OpenAI
-        projects: skillData.projects || profile.projects || [],
-        achievements: skillData.achievements || profile.achievements || [],
-        certifications: skillData.certifications || profile.certifications || [],
-        totalYearsExperience: skillData.totalYearsExperience || profile.totalYearsExperience || 0,
-        seniorityLevel: skillData.seniorityLevel || profile.seniorityLevel || 'Entry',
-      };
-      
-      setProfileData(profileInfo);
-      setProfile(profileInfo);
-      setCurrentStep(2);
-    } catch (error) {
-      console.error('Error processing resume:', error);
-      // Use sample data on error for demo
-      const mockSkills: Skill[] = [
-        { id: '1', name: 'JavaScript', level: 75, category: 'Languages', connections: ['2', '3'] },
-        { id: '2', name: 'TypeScript', level: 70, category: 'Languages', connections: ['1'] },
-        { id: '3', name: 'React', level: 80, category: 'Frontend', connections: ['1', '4'] },
-        { id: '4', name: 'Node.js', level: 65, category: 'Backend', connections: ['3', '5'] },
-        { id: '5', name: 'PostgreSQL', level: 55, category: 'Database', connections: ['4'] },
-        { id: '6', name: 'Python', level: 50, category: 'Languages', connections: ['7'] },
-        { id: '7', name: 'FastAPI', level: 45, category: 'Backend', connections: ['6'] },
-        { id: '8', name: 'Docker', level: 40, category: 'DevOps', connections: ['4'] },
-        { id: '9', name: 'AWS', level: 35, category: 'DevOps', connections: ['8'] },
-        { id: '10', name: 'Git', level: 85, category: 'Tools', connections: [] },
-      ];
-      
-      setSkills(mockSkills);
-      setRatedSkills(mockSkills);
-      setProfileData({
-        id: 'demo-profile',
-        skills: mockSkills,
-        skillGraph: mockSkills,
-        experience: ['Tech Corp - Software Engineer - 3 years'],
-        education: ['BS Computer Science'],
-        summary: 'Experienced software engineer with full-stack development skills',
-        strongestSkills: ['JavaScript', 'React', 'TypeScript'],
-        skillGaps: ['System Design', 'Algorithms', 'Data Structures'],
-      });
-      setCurrentStep(2);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSkillsRated = (rated: Skill[]) => {
-    setRatedSkills(rated);
-  };
-
-  const handleProceedToRoles = async () => {
-    setIsLoading(true);
-    try {
-      // Update profile with rated skills
-      const updatedProfile = {
-        ...profileData,
-        skills: ratedSkills,
-        skillGraph: ratedSkills,
-      };
-      setProfileData(updatedProfile);
-      setProfile(updatedProfile);
-      
-      // Get role recommendations based on rated skills WITH proficiency levels
-      const skillsWithLevels = ratedSkills.map(s => ({
+    // Simulate AI processing delay
+    setTimeout(() => {
+      // Extract skills from DEMO_PROFILE
+      const extractedSkills: Skill[] = DEMO_PROFILE.skills.map(s => ({
+        id: s.id,
         name: s.name,
+        level: s.level,
         category: s.category,
-        proficiency: s.level,
       }));
       
-      const rolesResponse = await rolesApi.getRecommendationsWithLevels(skillsWithLevels);
-      const rolesData = rolesResponse.roles || rolesResponse.data?.roles || rolesResponse || [];
-      
-      setRoles(rolesData);
-      setCurrentStep(3);
-    } catch (error) {
-      console.error('Error getting role recommendations:', error);
-      // Use sample roles on error
-      const mockRoles: Role[] = [
-        {
-          id: '1',
-          title: 'Senior Frontend Engineer',
-          matchPercentage: 75,
-          requiredSkills: ['JavaScript', 'React', 'TypeScript', 'CSS'],
-          missingSkills: ['System Design', 'Performance Optimization', 'Testing'],
-          salary: '$150K - $200K',
-          subjects: ['Data Structures', 'Algorithms', 'System Design', 'Frontend Architecture', 'Testing'],
-        },
-        {
-          id: '2',
-          title: 'Full Stack Developer',
-          matchPercentage: 70,
-          requiredSkills: ['JavaScript', 'React', 'Node.js', 'PostgreSQL'],
-          missingSkills: ['AWS', 'Microservices', 'Docker'],
-          salary: '$130K - $180K',
-          subjects: ['Data Structures', 'Algorithms', 'System Design', 'Backend Development', 'Database Design', 'DevOps'],
-        },
-        {
-          id: '3',
-          title: 'Software Engineer (Backend)',
-          matchPercentage: 60,
-          requiredSkills: ['Python', 'Node.js', 'PostgreSQL'],
-          missingSkills: ['System Design', 'Distributed Systems', 'Algorithms', 'Data Structures'],
-          salary: '$140K - $190K',
-          subjects: ['Data Structures', 'Algorithms', 'System Design', 'Distributed Systems', 'Database Internals'],
-        },
-        {
-          id: '4',
-          title: 'DevOps Engineer',
-          matchPercentage: 45,
-          requiredSkills: ['Docker', 'AWS', 'Git'],
-          missingSkills: ['Kubernetes', 'Terraform', 'CI/CD', 'Monitoring'],
-          salary: '$130K - $170K',
-          subjects: ['Cloud Architecture', 'Container Orchestration', 'Infrastructure as Code', 'CI/CD Pipelines'],
-        },
-      ];
-      setRoles(mockRoles);
-      setCurrentStep(3);
-    } finally {
-      setIsLoading(false);
-    }
+      setSkills(extractedSkills);
+      setProfile(DEMO_PROFILE as any);
+      setIsProcessing(false);
+      setCurrentStep(2);
+    }, 2000);
   };
 
   const handleRoleSelect = (role: Role) => {
     setSelectedRoleData(role);
-    setSelectedRole(role);
+    setSelectedRole(role as any);
   };
 
-  const handleProceedToTimeline = () => {
-    setCurrentStep(4);
-  };
-
-  const handleTimeSelected = (constraint: TimeConstraintType) => {
-    setTimeConstraint(constraint);
-  };
-
-  const handleGenerateRoadmap = async () => {
-    if (!selectedRoleData || !timeConstraint) return;
-    
-    setGeneratingRoadmap(true);
+  const handleGenerateRoadmap = () => {
     setCurrentStep(5);
     
-    try {
-      // Generate comprehensive roadmap with all parameters
-      const response = await roadmapApi.generateComprehensive({
-        userId: user?.id || 'demo-user',
-        targetRole: selectedRoleData.title,
-        skills: ratedSkills.map(s => ({
-          name: s.name,
-          category: s.category,
-          proficiency: s.level,
-        })),
-        missingSkills: selectedRoleData.missingSkills,
-        timeConstraint: {
-          weeks: timeConstraint.weeks,
-          hoursPerDay: timeConstraint.hoursPerDay,
-          intensity: timeConstraint.intensity,
-        },
-        resumeText: resumeText,
-      });
-      
-      // Roadmap is saved to Supabase by the backend
-      console.log('Roadmap generated:', response);
-      
-      // Navigate to subject overview page
-      setTimeout(() => {
-        navigate('/subject-overview');
-      }, 2000);
-    } catch (error) {
-      console.error('Error generating roadmap:', error);
-      // Still navigate - the page will handle missing data
-      setTimeout(() => {
-        navigate('/subject-overview');
-      }, 2000);
-    }
+    // Animate progress
+    let progress = 0;
+    const interval = setInterval(() => {
+      progress += 20;
+      setGeneratingProgress(progress);
+      if (progress >= 100) {
+        clearInterval(interval);
+        setTimeout(() => {
+          navigate('/subjects');
+        }, 500);
+      }
+    }, 600);
   };
 
-  const canProceed = () => {
-    switch (currentStep) {
-      case 2: return ratedSkills.length > 0;
-      case 3: return selectedRoleData !== null;
-      case 4: return timeConstraint !== null;
-      default: return true;
-    }
+  const getCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      'Languages': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      'AI/ML': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+      'Frontend': 'bg-green-500/20 text-green-400 border-green-500/30',
+      'Backend': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+      'Database': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+      'Tools': 'bg-gray-500/20 text-gray-400 border-gray-500/30',
+    };
+    return colors[category] || colors['Tools'];
   };
 
   return (
@@ -317,18 +158,71 @@ export function Onboarding() {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
+              className="max-w-2xl mx-auto"
             >
               <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold text-white mb-2">Upload Your Resume</h1>
                 <p className="text-gray-400">
-                  Our AI will analyze your complete resume to extract skills and experience
+                  Our AI will analyze your skills, experience, and projects
                 </p>
               </div>
-              <ResumeUpload onUpload={handleResumeUpload} isLoading={isLoading} />
+
+              <div className="bg-gray-900/60 backdrop-blur-sm rounded-2xl border border-gray-800 p-8">
+                {!isProcessing ? (
+                  <div 
+                    onClick={handleResumeUpload}
+                    className="border-2 border-dashed border-gray-700 rounded-xl p-12 text-center cursor-pointer hover:border-blue-500/50 hover:bg-blue-500/5 transition-all"
+                  >
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <Upload className="w-8 h-8 text-blue-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-white mb-2">
+                      Click to upload your resume
+                    </h3>
+                    <p className="text-gray-500 text-sm mb-4">
+                      PDF, DOC, or TXT (Max 10MB)
+                    </p>
+                    <Button>
+                      <FileText className="w-4 h-4 mr-2" />
+                      Select Resume
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="py-12 text-center">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                      className="w-16 h-16 mx-auto mb-6"
+                    >
+                      <Loader2 className="w-16 h-16 text-blue-500" />
+                    </motion.div>
+                    <h3 className="text-xl font-medium text-white mb-2">
+                      Analyzing Your Resume...
+                    </h3>
+                    <p className="text-gray-400">
+                      Extracting skills, experience, and achievements
+                    </p>
+                    <div className="mt-6 space-y-2 max-w-xs mx-auto">
+                      {['Reading document...', 'Extracting skills...', 'Analyzing experience...'].map((text, i) => (
+                        <motion.div
+                          key={text}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.5 }}
+                          className="flex items-center gap-2 text-sm text-gray-400"
+                        >
+                          <Check className="w-4 h-4 text-green-400" />
+                          {text}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
 
-          {/* Step 2: Skill Proficiency Rating */}
+          {/* Step 2: Skills Display */}
           {currentStep === 2 && (
             <motion.div
               key="step2"
@@ -337,31 +231,113 @@ export function Onboarding() {
               exit={{ opacity: 0, x: -20 }}
             >
               <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-white mb-2">Rate Your Skills</h1>
+                <h1 className="text-3xl font-bold text-white mb-2">
+                  Your Skills Profile
+                </h1>
                 <p className="text-gray-400">
-                  Help us understand your proficiency level in each skill
+                  We found <span className="text-blue-400 font-semibold">{skills.length} skills</span> from your resume
                 </p>
               </div>
-              
-              <SkillProficiency skills={skills} onSkillsRated={handleSkillsRated} />
-              
-              <div className="flex justify-between mt-8">
+
+              {/* Profile Summary Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 rounded-2xl p-6 border border-blue-500/20 mb-6"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-2xl font-bold text-white">
+                    {DEMO_PROFILE.name.charAt(0)}
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold text-white">{DEMO_PROFILE.name}</h2>
+                    <p className="text-gray-400 text-sm mt-1">{DEMO_PROFILE.summary.slice(0, 150)}...</p>
+                    <div className="flex gap-4 mt-3">
+                      <span className="text-sm text-gray-400">
+                        <span className="text-white font-medium">{DEMO_PROFILE.projects.length}</span> Projects
+                      </span>
+                      <span className="text-sm text-gray-400">
+                        <span className="text-white font-medium">{DEMO_PROFILE.totalYearsExperience}</span> Years Exp
+                      </span>
+                      <span className="text-sm text-gray-400">
+                        <span className="text-white font-medium">{DEMO_PROFILE.certifications.length}</span> Certifications
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Skills by Category */}
+              <div className="grid md:grid-cols-2 gap-4 mb-8">
+                {['Languages', 'AI/ML', 'Frontend', 'Backend', 'Database'].map((category, catIndex) => {
+                  const categorySkills = skills.filter(s => s.category === category);
+                  if (categorySkills.length === 0) return null;
+                  
+                  return (
+                    <motion.div
+                      key={category}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: catIndex * 0.1 }}
+                      className="bg-gray-900/60 rounded-xl p-4 border border-gray-800"
+                    >
+                      <h3 className="text-white font-medium mb-3 flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${getCategoryColor(category).split(' ')[0].replace('/20', '')}`} />
+                        {category}
+                      </h3>
+                      <div className="space-y-2">
+                        {categorySkills.map((skill, skillIndex) => (
+                          <motion.div
+                            key={skill.id}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: catIndex * 0.1 + skillIndex * 0.05 }}
+                            className="flex items-center justify-between"
+                          >
+                            <span className="text-gray-300 text-sm">{skill.name}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-20 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${skill.level}%` }}
+                                  transition={{ duration: 0.5, delay: catIndex * 0.1 + skillIndex * 0.05 }}
+                                  className={`h-full rounded-full ${
+                                    skill.level >= 80 ? 'bg-green-500' :
+                                    skill.level >= 60 ? 'bg-blue-500' :
+                                    skill.level >= 40 ? 'bg-yellow-500' : 'bg-orange-500'
+                                  }`}
+                                />
+                              </div>
+                              <span className="text-xs text-gray-500 w-8">{skill.level}%</span>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              {/* Strongest Skills */}
+              <div className="bg-gray-900/60 rounded-xl p-4 border border-gray-800 mb-8">
+                <h3 className="text-white font-medium mb-3">🔥 Strongest Skills</h3>
+                <div className="flex flex-wrap gap-2">
+                  {DEMO_PROFILE.strongestSkills.map((skill, i) => (
+                    <span key={i} className="px-3 py-1.5 bg-green-500/20 text-green-400 rounded-lg text-sm border border-green-500/30">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-between">
                 <Button variant="outline" onClick={() => setCurrentStep(1)}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </Button>
-                <Button onClick={handleProceedToRoles} disabled={!canProceed() || isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Loading Roles...
-                    </>
-                  ) : (
-                    <>
-                      Continue
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </>
-                  )}
+                <Button onClick={() => setCurrentStep(3)}>
+                  Continue to Role Selection
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             </motion.div>
@@ -381,37 +357,72 @@ export function Onboarding() {
                   Based on your skills, here are the best matching roles
                 </p>
               </div>
-              
-              <RoleMatch
-                roles={roles}
-                onSelectRole={handleRoleSelect}
-                selectedRoleId={selectedRoleData?.id}
-              />
 
-              {/* Show subjects for selected role */}
-              {selectedRoleData && selectedRoleData.missingSkills && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-6 p-4 rounded-lg bg-blue-500/10 border border-blue-500/30"
-                >
-                  <h4 className="text-white font-medium mb-2">Subjects you'll master for {selectedRoleData.title}:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedRoleData.missingSkills.map((skill) => (
-                      <span key={skill} className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-sm">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-              
-              <div className="flex justify-between mt-8">
+              <div className="grid md:grid-cols-2 gap-4 mb-8">
+                {DEMO_ROLES.map((role, index) => (
+                  <motion.div
+                    key={role.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    onClick={() => handleRoleSelect(role)}
+                    className={`relative p-5 rounded-xl border cursor-pointer transition-all ${
+                      selectedRoleData?.id === role.id
+                        ? 'bg-blue-500/20 border-blue-500'
+                        : 'bg-gray-900/60 border-gray-800 hover:border-gray-700'
+                    }`}
+                  >
+                    {/* Match Badge */}
+                    <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-medium ${
+                      role.matchPercentage >= 90 ? 'bg-green-500/20 text-green-400' :
+                      role.matchPercentage >= 80 ? 'bg-blue-500/20 text-blue-400' :
+                      'bg-yellow-500/20 text-yellow-400'
+                    }`}>
+                      {role.matchPercentage}% Match
+                    </div>
+
+                    <h3 className="text-lg font-bold text-white mb-1">{role.title}</h3>
+                    <p className="text-green-400 text-sm mb-3">{role.salary}</p>
+
+                    <div className="mb-3">
+                      <p className="text-xs text-gray-500 mb-1.5">Your Skills:</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {role.requiredSkills.slice(0, 4).map(skill => (
+                          <span key={skill} className="px-2 py-0.5 bg-green-500/20 text-green-400 rounded text-xs">
+                            ✓ {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1.5">Skills to Learn:</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {role.missingSkills.slice(0, 3).map(skill => (
+                          <span key={skill} className="px-2 py-0.5 bg-orange-500/20 text-orange-400 rounded text-xs">
+                            + {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {selectedRoleData?.id === role.id && (
+                      <div className="absolute top-4 left-4">
+                        <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
+                          <Check className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="flex justify-between">
                 <Button variant="outline" onClick={() => setCurrentStep(2)}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </Button>
-                <Button onClick={handleProceedToTimeline} disabled={!canProceed()}>
+                <Button onClick={() => setCurrentStep(4)} disabled={!selectedRoleData}>
                   Continue
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -419,32 +430,99 @@ export function Onboarding() {
             </motion.div>
           )}
 
-          {/* Step 4: Time Constraint */}
+          {/* Step 4: Timeline */}
           {currentStep === 4 && (
             <motion.div
               key="step4"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
+              className="max-w-2xl mx-auto"
             >
               <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold text-white mb-2">Set Your Timeline</h1>
                 <p className="text-gray-400">
-                  How much time do you have for interview preparation?
+                  How much time can you dedicate to preparation?
                 </p>
               </div>
-              
-              <TimeConstraint
-                onTimeSelected={handleTimeSelected}
-                selectedConstraint={timeConstraint || undefined}
-              />
-              
-              <div className="flex justify-between mt-8">
+
+              <div className="bg-gray-900/60 rounded-2xl p-6 border border-gray-800 mb-6">
+                {/* Weeks Selection */}
+                <div className="mb-8">
+                  <label className="text-white font-medium mb-4 block">
+                    Preparation Duration
+                  </label>
+                  <div className="grid grid-cols-4 gap-3">
+                    {[4, 8, 12, 16].map(weeks => (
+                      <button
+                        key={weeks}
+                        onClick={() => setSelectedWeeks(weeks)}
+                        className={`p-4 rounded-xl border transition-all ${
+                          selectedWeeks === weeks
+                            ? 'bg-blue-500/20 border-blue-500 text-blue-400'
+                            : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600'
+                        }`}
+                      >
+                        <div className="text-2xl font-bold">{weeks}</div>
+                        <div className="text-xs">weeks</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Hours Per Day */}
+                <div>
+                  <label className="text-white font-medium mb-4 block">
+                    Hours per Day: <span className="text-blue-400">{hoursPerDay}h</span>
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => setHoursPerDay(Math.max(1, hoursPerDay - 1))}
+                      className="p-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white"
+                    >
+                      <ChevronDown className="w-5 h-5" />
+                    </button>
+                    <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all"
+                        style={{ width: `${(hoursPerDay / 8) * 100}%` }}
+                      />
+                    </div>
+                    <button
+                      onClick={() => setHoursPerDay(Math.min(8, hoursPerDay + 1))}
+                      className="p-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white"
+                    >
+                      <ChevronUp className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="bg-blue-500/10 rounded-xl p-4 border border-blue-500/30 mb-8">
+                <h4 className="text-white font-medium mb-2">Your Plan Summary</h4>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-blue-400">{selectedWeeks}</div>
+                    <div className="text-xs text-gray-400">Weeks</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-purple-400">{hoursPerDay}h</div>
+                    <div className="text-xs text-gray-400">Daily</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-400">{selectedWeeks * 7 * hoursPerDay}</div>
+                    <div className="text-xs text-gray-400">Total Hours</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-between">
                 <Button variant="outline" onClick={() => setCurrentStep(3)}>
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </Button>
-                <Button onClick={handleGenerateRoadmap} disabled={!canProceed()}>
+                <Button onClick={handleGenerateRoadmap}>
                   Generate My Roadmap
                   <Sparkles className="w-4 h-4 ml-2" />
                 </Button>
@@ -452,57 +530,62 @@ export function Onboarding() {
             </motion.div>
           )}
 
-          {/* Step 5: Generating Roadmap */}
+          {/* Step 5: Generating */}
           {currentStep === 5 && (
             <motion.div
               key="step5"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="text-center py-20"
+              className="text-center py-16 max-w-md mx-auto"
             >
               <motion.div
                 animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
                 className="w-20 h-20 mx-auto mb-8"
               >
                 <Sparkles className="w-20 h-20 text-blue-500" />
               </motion.div>
-              
+
               <h1 className="text-3xl font-bold text-white mb-4">
-                Creating Your Personalized Roadmap
+                Creating Your Roadmap
               </h1>
-              
-              <p className="text-gray-400 mb-8 max-w-md mx-auto">
-                Our AI is analyzing your skills, target role, and timeline to create 
-                a comprehensive learning plan with all the subjects you need to master.
+
+              <p className="text-gray-400 mb-8">
+                Building a personalized learning path for {selectedRoleData?.title}
               </p>
-              
-              <div className="space-y-3 text-left max-w-sm mx-auto">
+
+              {/* Progress Bar */}
+              <div className="w-full h-2 bg-gray-800 rounded-full mb-6 overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${generatingProgress}%` }}
+                />
+              </div>
+
+              <div className="space-y-3 text-left">
                 {[
-                  'Analyzing skill gaps...',
-                  'Identifying required subjects...',
-                  'Creating daily study plan...',
-                  'Finding best resources...',
-                  'Generating your roadmap...',
-                ].map((text, index) => (
+                  { text: 'Analyzing skill gaps...', done: generatingProgress >= 20 },
+                  { text: 'Selecting core subjects...', done: generatingProgress >= 40 },
+                  { text: 'Creating weekly roadmap...', done: generatingProgress >= 60 },
+                  { text: 'Finding best resources...', done: generatingProgress >= 80 },
+                  { text: 'Finalizing your plan...', done: generatingProgress >= 100 },
+                ].map((item, i) => (
                   <motion.div
-                    key={text}
+                    key={i}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.5 }}
+                    transition={{ delay: i * 0.2 }}
                     className="flex items-center gap-3"
                   >
-                    <motion.div
-                      animate={{ scale: [1, 1.2, 1] }}
-                      transition={{ delay: index * 0.5, duration: 0.5 }}
-                    >
-                      {generatingRoadmap && index <= Math.floor(Date.now() / 500) % 5 ? (
-                        <Check className="w-5 h-5 text-green-500" />
-                      ) : (
-                        <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
-                      )}
-                    </motion.div>
-                    <span className="text-gray-300">{text}</span>
+                    {item.done ? (
+                      <Check className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                    )}
+                    <span className={item.done ? 'text-green-400' : 'text-gray-400'}>
+                      {item.text}
+                    </span>
                   </motion.div>
                 ))}
               </div>

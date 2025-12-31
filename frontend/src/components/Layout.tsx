@@ -11,7 +11,7 @@ interface LayoutProps {
 const navItems = [
   { path: '/', label: 'Home', icon: Zap, requiresAuth: false },
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, requiresAuth: true },
-  { path: '/roadmap', label: 'Roadmap', icon: Map, requiresAuth: true },
+  { path: '/subjects', label: 'Roadmap', icon: Map, requiresAuth: true },
   { path: '/interview', label: 'Interview', icon: Video, requiresAuth: true },
 ];
 

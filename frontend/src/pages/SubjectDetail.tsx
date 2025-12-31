@@ -1,76 +1,51 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   BookOpen,
   Clock,
-  Calendar,
   Target,
   CheckCircle,
-  ChevronLeft,
-  ChevronRight,
+  ChevronDown,
+  ChevronUp,
   ExternalLink,
   Play,
-  Youtube,
   Code,
   FileText,
+  Brain,
+  Server,
+  Users,
+  Zap,
+  ArrowLeft,
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { roadmapApi } from '../services/api';
+import { DEMO_SUBJECTS } from '../data/mockDemoData';
+import type { Subject, Week } from '../data/mockDemoData';
 
-interface Task {
-  id: string;
-  title: string;
-  type: 'problem' | 'course' | 'reading' | 'practice';
-  duration: string;
-  reason: string;
-  completed: boolean;
-  link?: string;
-  difficulty?: string;
-  day?: number;
-  platform?: string;
-  youtubeAlternative?: {
-    title: string;
-    link: string;
-    channel: string;
-    duration: string;
+const getSubjectIcon = (iconName: string) => {
+  const icons: { [key: string]: any } = {
+    Code: Code,
+    Brain: Brain,
+    Server: Server,
+    Users: Users,
+    BookOpen: BookOpen,
+    Zap: Zap,
   };
-}
+  return icons[iconName] || BookOpen;
+};
 
-interface DailyPlan {
-  focus: string;
-  tasks: string[];
-}
-
-interface Week {
-  id: string;
-  number: number;
-  title: string;
-  description: string;
-  focus: string;
-  subjectId: string;
-  estimatedHours: number;
-  dailyPlan?: {
-    day1?: DailyPlan;
-    day2?: DailyPlan;
-    day3?: DailyPlan;
-    day4?: DailyPlan;
-    day5?: DailyPlan;
-    day6?: DailyPlan;
-    day7?: DailyPlan;
-  };
-  tasks: Task[];
-}
+const getGradientClass = (color: string) => {
+  return color || 'from-blue-500 to-cyan-500';
+};
 
 const getTaskIcon = (type: string) => {
   switch (type) {
     case 'problem':
       return Code;
-    case 'course':
+    case 'video':
       return Play;
     case 'reading':
       return FileText;
-    case 'practice':
+    case 'project':
       return Target;
     default:
       return BookOpen;
@@ -78,85 +53,115 @@ const getTaskIcon = (type: string) => {
 };
 
 const getDifficultyColor = (difficulty?: string) => {
-  switch (difficulty?.toLowerCase()) {
+  switch (difficulty) {
     case 'easy':
-      return 'bg-green-500/20 text-green-400 border-green-500/30';
+      return 'text-green-400 bg-green-500/20 border-green-500/30';
     case 'medium':
-      return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
+      return 'text-yellow-400 bg-yellow-500/20 border-yellow-500/30';
     case 'hard':
-      return 'bg-red-500/20 text-red-400 border-red-500/30';
+      return 'text-red-400 bg-red-500/20 border-red-500/30';
     default:
-      return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+      return 'text-gray-400 bg-gray-500/20 border-gray-500/30';
+  }
+};
+
+const getTypeColor = (type: string) => {
+  switch (type) {
+    case 'problem':
+      return 'text-orange-400 bg-orange-500/20';
+    case 'video':
+      return 'text-red-400 bg-red-500/20';
+    case 'reading':
+      return 'text-blue-400 bg-blue-500/20';
+    case 'project':
+      return 'text-purple-400 bg-purple-500/20';
+    default:
+      return 'text-gray-400 bg-gray-500/20';
   }
 };
 
 export default function SubjectDetail() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { user } = useAuth();
+  const { subjectId } = useParams<{ subjectId: string }>();
   
-  const subjectId = searchParams.get('subject');
-  const [weeks, setWeeks] = useState<Week[]>([]);
-  const [subjectName, setSubjectName] = useState('');
+  const [subject, setSubject] = useState<Subject | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedWeek, setSelectedWeek] = useState<number>(0);
-  const [selectedDay, setSelectedDay] = useState<number>(1);
+  const [expandedWeeks, setExpandedWeeks] = useState<Set<string>>(new Set());
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (user?.id && subjectId) {
-      fetchSubjectDetails();
-    }
-  }, [user?.id, subjectId]);
-
-  const fetchSubjectDetails = async () => {
-    try {
-      const roadmap = await roadmapApi.get(user!.id);
-      
-      // Filter weeks for this subject
-      const subjectWeeks = (roadmap.weeks || []).filter(
-        (w: Week) => w.subjectId === subjectId || w.focus?.toLowerCase().includes(subjectId?.toLowerCase() || '')
-      );
-      
-      setWeeks(subjectWeeks);
-      
-      // Get subject name from overview
-      const subject = roadmap.overview?.subjects?.find((s: any) => s.id === subjectId);
-      setSubjectName(subject?.name || subjectId || 'Subject');
-      
-    } catch (error) {
-      console.error('Failed to fetch subject details:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTaskToggle = async (weekId: string, taskId: string, completed: boolean) => {
-    try {
-      await roadmapApi.updateTask(user!.id, taskId, !completed, weekId);
-      
-      // Update local state
-      setWeeks(prev =>
-        prev.map(week => {
-          if (week.id === weekId) {
-            return {
-              ...week,
-              tasks: week.tasks.map(task =>
-                task.id === taskId ? { ...task, completed: !completed } : task
-              ),
-            };
+    // Simulate loading and use mock data
+    const timer = setTimeout(() => {
+      const foundSubject = DEMO_SUBJECTS.find(s => s.id === subjectId);
+      if (foundSubject) {
+        setSubject(foundSubject);
+        // Expand first week by default
+        if (foundSubject.weeks.length > 0) {
+          setExpandedWeeks(new Set([foundSubject.weeks[0].id]));
+        }
+        // Load some completed tasks for demo
+        const initialCompleted = new Set<string>();
+        foundSubject.weeks.forEach((week, wIndex) => {
+          if (wIndex === 0) {
+            // Mark first 2 tasks as completed for demo
+            week.tasks.slice(0, 2).forEach(t => initialCompleted.add(t.id));
           }
-          return week;
-        })
-      );
-    } catch (error) {
-      console.error('Failed to update task:', error);
-    }
+        });
+        setCompletedTasks(initialCompleted);
+      }
+      setLoading(false);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [subjectId]);
+
+  const toggleWeek = (weekId: string) => {
+    setExpandedWeeks(prev => {
+      const next = new Set(prev);
+      if (next.has(weekId)) {
+        next.delete(weekId);
+      } else {
+        next.add(weekId);
+      }
+      return next;
+    });
   };
 
-  const calculateWeekProgress = (week: Week) => {
-    const total = week.tasks.length;
-    const completed = week.tasks.filter(t => t.completed).length;
-    return total > 0 ? Math.round((completed / total) * 100) : 0;
+  const toggleTask = (taskId: string) => {
+    setCompletedTasks(prev => {
+      const next = new Set(prev);
+      if (next.has(taskId)) {
+        next.delete(taskId);
+      } else {
+        next.add(taskId);
+      }
+      return next;
+    });
+  };
+
+  const getWeekProgress = (week: Week) => {
+    const completed = week.tasks.filter(t => completedTasks.has(t.id)).length;
+    return {
+      completed,
+      total: week.tasks.length,
+      percentage: week.tasks.length > 0 ? Math.round((completed / week.tasks.length) * 100) : 0
+    };
+  };
+
+  const getOverallProgress = () => {
+    if (!subject) return { completed: 0, total: 0, percentage: 0 };
+    let completed = 0;
+    let total = 0;
+    subject.weeks.forEach(week => {
+      week.tasks.forEach(task => {
+        total++;
+        if (completedTasks.has(task.id)) completed++;
+      });
+    });
+    return {
+      completed,
+      total,
+      percentage: total > 0 ? Math.round((completed / total) * 100) : 0
+    };
   };
 
   if (loading) {
@@ -171,342 +176,274 @@ export default function SubjectDetail() {
     );
   }
 
-  if (weeks.length === 0) {
+  if (!subject) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="text-center">
-          <BookOpen className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-white mb-2">No Content Found</h2>
-          <p className="text-gray-400 mb-6">
-            This subject doesn't have any weeks assigned yet.
-          </p>
+          <h1 className="text-2xl font-bold text-white mb-2">Subject Not Found</h1>
+          <p className="text-gray-400 mb-4">The requested subject doesn't exist.</p>
           <button
-            onClick={() => navigate('/subject-overview')}
-            className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition-colors"
+            onClick={() => navigate('/subjects')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
-            Back to Overview
+            Back to Subjects
           </button>
         </div>
       </div>
     );
   }
 
-  const currentWeek = weeks[selectedWeek];
-  const currentDailyPlan = currentWeek?.dailyPlan?.[`day${selectedDay}` as keyof typeof currentWeek.dailyPlan];
-  const dayTasks = currentWeek?.tasks.filter(t => t.day === selectedDay) || currentWeek?.tasks || [];
+  const Icon = getSubjectIcon(subject.icon);
+  const progress = getOverallProgress();
 
   return (
     <div className="min-h-screen bg-gray-950 py-8">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-5xl mx-auto px-4">
+        {/* Back Button */}
+        <motion.button
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          onClick={() => navigate('/subjects')}
+          className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to Subjects
+        </motion.button>
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className={`bg-gradient-to-r ${getGradientClass(subject.color)} p-1 rounded-2xl mb-8`}
         >
-          <button
-            onClick={() => navigate('/subject-overview')}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
-          >
-            <ChevronLeft className="w-5 h-5" />
-            Back to Overview
-          </button>
-          
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-white mb-2">{subjectName}</h1>
-              <p className="text-gray-400">
-                {weeks.length} weeks • {weeks.reduce((sum, w) => sum + (w.estimatedHours || 0), 0)} total hours
-              </p>
+          <div className="bg-gray-900 rounded-xl p-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className={`p-4 rounded-xl bg-gradient-to-br ${getGradientClass(subject.color)} shadow-lg`}>
+                  <Icon className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-white">{subject.name}</h1>
+                  <p className="text-gray-400">{subject.description}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-white">{subject.totalWeeks}</p>
+                  <p className="text-xs text-gray-400">Weeks</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-white">{progress.total}</p>
+                  <p className="text-xs text-gray-400">Tasks</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-400">{progress.percentage}%</p>
+                  <p className="text-xs text-gray-400">Complete</p>
+                </div>
+              </div>
             </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm text-gray-500">Overall Progress</p>
-                <p className="text-2xl font-bold text-blue-400">
-                  {Math.round(weeks.reduce((sum, w) => sum + calculateWeekProgress(w), 0) / weeks.length)}%
-                </p>
+
+            {/* Progress Bar */}
+            <div className="mt-6">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-gray-400">Overall Progress</span>
+                <span className="text-white font-medium">{progress.completed}/{progress.total} tasks</span>
+              </div>
+              <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress.percentage}%` }}
+                  transition={{ duration: 1, ease: 'easeOut' }}
+                  className={`h-full bg-gradient-to-r ${getGradientClass(subject.color)} rounded-full`}
+                />
               </div>
             </div>
           </div>
         </motion.div>
 
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Week Navigator */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="lg:col-span-1 space-y-3"
-          >
-            <h3 className="text-lg font-semibold text-white mb-4">Weeks</h3>
-            {weeks.map((week, index) => {
-              const progress = calculateWeekProgress(week);
-              const isSelected = selectedWeek === index;
-              
-              return (
-                <motion.button
-                  key={week.id}
-                  whileHover={{ x: 4 }}
-                  onClick={() => {
-                    setSelectedWeek(index);
-                    setSelectedDay(1);
-                  }}
-                  className={`w-full text-left p-4 rounded-xl border transition-all ${
-                    isSelected
-                      ? 'bg-blue-600/20 border-blue-500/50'
-                      : 'bg-gray-900/50 border-gray-800 hover:border-gray-700'
-                  }`}
+        {/* Weeks Accordion */}
+        <div className="space-y-4">
+          {subject.weeks.map((week, index) => {
+            const weekProgress = getWeekProgress(week);
+            const isExpanded = expandedWeeks.has(week.id);
+            
+            return (
+              <motion.div
+                key={week.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-gray-900/60 backdrop-blur-sm rounded-2xl border border-gray-800 overflow-hidden"
+              >
+                {/* Week Header */}
+                <button
+                  onClick={() => toggleWeek(week.id)}
+                  className="w-full p-5 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`font-medium ${isSelected ? 'text-blue-400' : 'text-white'}`}>
-                      Week {week.number}
-                    </span>
-                    <span className={`text-sm ${progress === 100 ? 'text-green-400' : 'text-gray-500'}`}>
-                      {progress}%
-                    </span>
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg ${
+                      weekProgress.percentage === 100 
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                        : weekProgress.percentage > 0
+                        ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                        : 'bg-gray-800 text-gray-400 border border-gray-700'
+                    }`}>
+                      {weekProgress.percentage === 100 ? (
+                        <CheckCircle className="w-6 h-6" />
+                      ) : (
+                        `W${week.number}`
+                      )}
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-lg font-semibold text-white">{week.title}</h3>
+                      <p className="text-sm text-gray-400">{week.focus}</p>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-400 truncate">{week.title}</p>
-                  <div className="mt-2 h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${
-                        progress === 100 ? 'bg-green-500' : 'bg-blue-500'
-                      }`}
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </motion.button>
-              );
-            })}
-          </motion.div>
-
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Week Details */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-gray-900/50 backdrop-blur-sm rounded-2xl p-6 border border-gray-800"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h2 className="text-xl font-semibold text-white">{currentWeek?.title}</h2>
-                  <p className="text-gray-400 mt-1">{currentWeek?.description}</p>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Clock className="w-4 h-4" />
-                  {currentWeek?.estimatedHours}h estimated
-                </div>
-              </div>
-
-              {/* Day Selector */}
-              {currentWeek?.dailyPlan && (
-                <div className="mt-6">
-                  <h3 className="text-sm font-medium text-gray-400 mb-3">Daily Plan</h3>
-                  <div className="flex gap-2 overflow-x-auto pb-2">
-                    {[1, 2, 3, 4, 5, 6, 7].map(day => {
-                      const dayPlan = currentWeek.dailyPlan?.[`day${day}` as keyof typeof currentWeek.dailyPlan];
-                      const isSelected = selectedDay === day;
-                      
-                      return (
-                        <button
-                          key={day}
-                          onClick={() => setSelectedDay(day)}
-                          className={`flex-shrink-0 px-4 py-2 rounded-xl border transition-all ${
-                            isSelected
-                              ? 'bg-blue-600 border-blue-500 text-white'
-                              : dayPlan
-                              ? 'bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600'
-                              : 'bg-gray-900 border-gray-800 text-gray-600'
-                          }`}
-                        >
-                          Day {day}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Day Focus */}
-              {currentDailyPlan && (
-                <motion.div
-                  key={`day-${selectedDay}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-4 p-4 bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-xl border border-blue-500/20"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target className="w-4 h-4 text-blue-400" />
-                    <span className="font-medium text-white">Day {selectedDay} Focus</span>
-                  </div>
-                  <p className="text-blue-300 font-medium">{currentDailyPlan.focus}</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {currentDailyPlan.tasks.map((task, i) => (
-                      <span key={i} className="text-xs px-3 py-1 bg-gray-800/50 text-gray-300 rounded-lg">
-                        {task}
-                      </span>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </motion.div>
-
-            {/* Tasks List */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="space-y-4"
-            >
-              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-400" />
-                Tasks {selectedDay && currentWeek?.dailyPlan ? `for Day ${selectedDay}` : ''}
-              </h3>
-
-              <AnimatePresence mode="popLayout">
-                {dayTasks.map((task, index) => {
-                  const Icon = getTaskIcon(task.type);
                   
-                  return (
+                  <div className="flex items-center gap-4">
+                    <div className="text-right hidden md:block">
+                      <p className="text-sm text-gray-400">
+                        {weekProgress.completed}/{weekProgress.total} tasks
+                      </p>
+                      <div className="w-24 h-1.5 bg-gray-800 rounded-full mt-1">
+                        <div 
+                          className={`h-full bg-gradient-to-r ${getGradientClass(subject.color)} rounded-full transition-all`}
+                          style={{ width: `${weekProgress.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                    {isExpanded ? (
+                      <ChevronUp className="w-5 h-5 text-gray-400" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-gray-400" />
+                    )}
+                  </div>
+                </button>
+
+                {/* Week Content */}
+                <AnimatePresence>
+                  {isExpanded && (
                     <motion.div
-                      key={task.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ delay: 0.05 * index }}
-                      className={`bg-gray-900/50 backdrop-blur-sm rounded-xl p-5 border transition-all ${
-                        task.completed
-                          ? 'border-green-500/30 bg-green-900/10'
-                          : 'border-gray-800 hover:border-gray-700'
-                      }`}
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
                     >
-                      <div className="flex items-start gap-4">
-                        <button
-                          onClick={() => handleTaskToggle(currentWeek.id, task.id, task.completed)}
-                          className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
-                            task.completed
-                              ? 'bg-green-500 border-green-500'
-                              : 'border-gray-600 hover:border-blue-500'
-                          }`}
-                        >
-                          {task.completed && <CheckCircle className="w-4 h-4 text-white" />}
-                        </button>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <Icon className={`w-4 h-4 ${task.completed ? 'text-green-400' : 'text-blue-400'}`} />
-                                <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                  task.type === 'problem'
-                                    ? 'bg-purple-500/20 text-purple-400'
-                                    : task.type === 'course'
-                                    ? 'bg-blue-500/20 text-blue-400'
-                                    : 'bg-gray-500/20 text-gray-400'
-                                }`}>
-                                  {task.type}
-                                </span>
-                                {task.difficulty && (
-                                  <span className={`text-xs px-2 py-0.5 rounded-full border ${getDifficultyColor(task.difficulty)}`}>
-                                    {task.difficulty}
-                                  </span>
-                                )}
-                              </div>
-                              <h4 className={`font-medium ${task.completed ? 'text-gray-500 line-through' : 'text-white'}`}>
-                                {task.title}
-                              </h4>
-                            </div>
+                      <div className="px-5 pb-5 border-t border-gray-800 pt-4">
+                        {/* Tasks List */}
+                        <div className="space-y-3">
+                          {week.tasks.map((task, taskIndex) => {
+                            const TaskIcon = getTaskIcon(task.type);
+                            const isCompleted = completedTasks.has(task.id);
                             
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                              <Clock className="w-4 h-4" />
-                              {task.duration}
-                            </div>
-                          </div>
-
-                          <p className="text-sm text-gray-400 mt-2">{task.reason}</p>
-
-                          {/* Links */}
-                          <div className="flex flex-wrap items-center gap-3 mt-3">
-                            {task.link && (
-                              <a
-                                href={task.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                            return (
+                              <motion.div
+                                key={task.id}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: taskIndex * 0.05 }}
+                                className={`p-4 rounded-xl border transition-all ${
+                                  isCompleted 
+                                    ? 'bg-green-500/10 border-green-500/30' 
+                                    : 'bg-gray-800/50 border-gray-700 hover:border-gray-600'
+                                }`}
                               >
-                                <ExternalLink className="w-4 h-4" />
-                                {task.platform || 'Open Resource'}
-                              </a>
-                            )}
-                            {task.youtubeAlternative && (
-                              <a
-                                href={task.youtubeAlternative.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 text-sm text-red-400 hover:text-red-300 transition-colors"
-                              >
-                                <Youtube className="w-4 h-4" />
-                                Free: {task.youtubeAlternative.channel}
-                              </a>
-                            )}
-                          </div>
+                                <div className="flex items-start gap-3">
+                                  {/* Checkbox */}
+                                  <button
+                                    onClick={() => toggleTask(task.id)}
+                                    className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                                      isCompleted 
+                                        ? 'bg-green-500 border-green-500' 
+                                        : 'border-gray-500 hover:border-blue-400'
+                                    }`}
+                                  >
+                                    {isCompleted && <CheckCircle className="w-3 h-3 text-white" />}
+                                  </button>
+
+                                  {/* Task Content */}
+                                  <div className="flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className={`p-1.5 rounded-lg ${getTypeColor(task.type)}`}>
+                                        <TaskIcon className="w-3.5 h-3.5" />
+                                      </span>
+                                      <span className={`text-sm font-medium ${isCompleted ? 'line-through text-gray-500' : 'text-white'}`}>
+                                        {task.title}
+                                      </span>
+                                      {task.difficulty && (
+                                        <span className={`text-xs px-2 py-0.5 rounded-full border ${getDifficultyColor(task.difficulty)}`}>
+                                          {task.difficulty}
+                                        </span>
+                                      )}
+                                    </div>
+                                    
+                                    <p className={`text-xs ${isCompleted ? 'text-gray-600' : 'text-gray-500'}`}>
+                                      {task.reason}
+                                    </p>
+
+                                    {/* Task Meta */}
+                                    <div className="flex items-center gap-4 mt-2">
+                                      <span className="text-xs text-gray-500 flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        {task.duration}
+                                      </span>
+                                      {task.platform && (
+                                        <span className="text-xs text-gray-500">
+                                          {task.platform}
+                                        </span>
+                                      )}
+                                      {task.link && (
+                                        <a
+                                          href={task.link}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <ExternalLink className="w-3 h-3" />
+                                          Open
+                                        </a>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            );
+                          })}
                         </div>
                       </div>
                     </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-
-              {dayTasks.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <Calendar className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>No tasks for this day</p>
-                </div>
-              )}
-            </motion.div>
-
-            {/* Week Navigation */}
-            <div className="flex justify-between pt-4">
-              <button
-                onClick={() => {
-                  if (selectedWeek > 0) {
-                    setSelectedWeek(selectedWeek - 1);
-                    setSelectedDay(1);
-                  }
-                }}
-                disabled={selectedWeek === 0}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${
-                  selectedWeek === 0
-                    ? 'text-gray-600 cursor-not-allowed'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                }`}
-              >
-                <ChevronLeft className="w-5 h-5" />
-                Previous Week
-              </button>
-              
-              <button
-                onClick={() => {
-                  if (selectedWeek < weeks.length - 1) {
-                    setSelectedWeek(selectedWeek + 1);
-                    setSelectedDay(1);
-                  }
-                }}
-                disabled={selectedWeek === weeks.length - 1}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${
-                  selectedWeek === weeks.length - 1
-                    ? 'text-gray-600 cursor-not-allowed'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                }`}
-              >
-                Next Week
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
         </div>
+
+        {/* Action Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="mt-8 flex gap-4"
+        >
+          <button
+            onClick={() => navigate('/subjects')}
+            className="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl transition-colors flex items-center justify-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Subjects
+          </button>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className={`flex-1 py-3 bg-gradient-to-r ${getGradientClass(subject.color)} text-white rounded-xl transition-opacity hover:opacity-90 flex items-center justify-center gap-2`}
+          >
+            <Zap className="w-4 h-4" />
+            Practice Now
+          </button>
+        </motion.div>
       </div>
     </div>
   );

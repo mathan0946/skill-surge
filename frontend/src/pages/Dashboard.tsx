@@ -26,6 +26,7 @@ import {
   FolderKanban,
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { DEMO_DAILY_PROBLEM } from '../data/mockDemoData';
 export function Dashboard() {
   const { selectedRole, profile } = useApp();
   const { user } = useAuth();
@@ -45,9 +46,52 @@ export function Dashboard() {
 
   const userId = user?.id || localStorage.getItem('user_id') || 'demo-user';
 
+  // Demo mode - use mock data for realistic beginner experience
+  const DEMO_MODE = true;
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
+      
+      if (DEMO_MODE) {
+        // Simulate loading delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        // Set realistic beginner data (day 2 of using app)
+        setDashboardData({
+          targetRole: 'AI/ML Engineer',
+          stats: {
+            streak: 2,           // Just started - 2 day streak
+            problemsSolved: 3,   // Solved 3 problems
+            skillMatch: 72,      // Good base match from resume
+            daysUntilReady: 84,  // 12 weeks remaining
+          }
+        });
+        
+        setDailyProblem(DEMO_DAILY_PROBLEM);
+        setStreak(2);
+        
+        setJobReadiness({
+          readinessScore: 72,
+          weeksUntilReady: 12,
+          topGaps: ['System Design', 'Distributed Systems', 'Advanced ML'],
+          recommendation: 'Focus on DSA fundamentals this week'
+        });
+        
+        // Progress showing just started (week 1 in progress)
+        setProgressData([
+          { week: 'W1', score: 72 },  // Current week
+          { week: 'W2', score: 0 },
+          { week: 'W3', score: 0 },
+          { week: 'W4', score: 0 },
+          { week: 'W5', score: 0 },
+          { week: 'W6', score: 0 },
+        ]);
+        
+        setIsLoading(false);
+        return;
+      }
+      
       try {
         // Fetch dashboard data and daily problem in parallel
         const [dashboard, daily] = await Promise.all([
@@ -136,12 +180,12 @@ export function Dashboard() {
           className="mb-8"
         >
           <h1 className="text-3xl font-bold text-white mb-2">
-            Welcome back{user?.full_name ? `, ${user.full_name.split(' ')[0]}` : ''}! 👋
+            Welcome back, Mathana! 👋
           </h1>
           <p className="text-gray-400">
             Let's continue your journey to{' '}
             <span className="text-blue-400">
-              {dashboardData?.targetRole || selectedRole?.title || 'Senior Frontend Engineer'}
+              {dashboardData?.targetRole || selectedRole?.title || 'AI/ML Engineer'}
             </span>
           </p>
         </motion.div>
@@ -270,7 +314,7 @@ export function Dashboard() {
                       <ChevronRight className="w-4 h-4" />
                     </Button>
                   </Link>
-                  <Link to="/roadmap">
+                  <Link to="/subjects">
                     <Button variant="outline" className="w-full justify-between">
                       <span className="flex items-center gap-2">
                         <Target className="w-4 h-4 text-blue-400" />

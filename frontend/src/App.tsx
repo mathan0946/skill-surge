@@ -51,7 +51,17 @@ function App() {
                     <SubjectOverview />
                   </ProtectedRoute>
                 } />
+                <Route path="/subjects" element={
+                  <ProtectedRoute>
+                    <SubjectOverview />
+                  </ProtectedRoute>
+                } />
                 <Route path="/subject-detail" element={
+                  <ProtectedRoute>
+                    <SubjectDetail />
+                  </ProtectedRoute>
+                } />
+                <Route path="/subject/:subjectId" element={
                   <ProtectedRoute>
                     <SubjectDetail />
                   </ProtectedRoute>
